@@ -236,7 +236,7 @@ void message_parse(const char *message_string, size_t length,
           cnc_buffer_insert_char(databuffer, databuffer->length, 1,
                                  COLOR_INFO_BYTE);
           cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                                 COLOR_CODE_GREEN_FG);
+                                 COLOR_CODE_CYAN_FG);
         }
 
         // insert timestamp
