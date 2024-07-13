@@ -153,7 +153,10 @@ int main(void)
   }
 
   // initial screen setup
-  cnc_buffer_set_text(display->data, "Welcome to cnctty v 1.01\n");
+  cnc_buffer_set_text(display->data, "Welcome to cnctty v 1.01");
+#ifdef DEVEL_MODE
+  cnc_buffer_append(display->data, " (development mode)");
+#endif
   set_info(infobar, "offline", COLOR_RED_BG, prompt, display);
   cnc_terminal_set_mode(term, MODE_INS);
 
@@ -187,7 +190,7 @@ int main(void)
 
   // user interface begins here
   // initially get the username
-  cnc_buffer_append(display->data, "    Pick a username: _\n");
+  cnc_buffer_append(display->data, "\n    Pick a username: _\n");
   cnc_terminal_update_and_redraw(term);
 
   while (true)
@@ -316,10 +319,10 @@ int main(void)
     {
       if (net->connected)
       {
-        prompt->foreground = COLOR_WHITE_FG;
-        cnc_terminal_focus_widget(term, display);
-        cnc_terminal_update_and_redraw(term);
-        sleep(1);
+        // prompt->foreground = COLOR_WHITE_FG;
+        // cnc_terminal_focus_widget(term, display);
+        // cnc_terminal_update_and_redraw(term);
+        // sleep(1);
 
         // changing username??
         if (prompt->data->contents[0] == '.' &&
@@ -332,8 +335,8 @@ int main(void)
         }
 
         SSL_write(net->ssl, prompt->data->contents, prompt->data->length + 1);
-        prompt->foreground = COLOR_CYAN_FG;
-        cnc_terminal_focus_widget(term, prompt);
+        // prompt->foreground = COLOR_CYAN_FG;
+        // cnc_terminal_focus_widget(term, prompt);
         cnc_terminal_update_and_redraw(term);
       }
 
