@@ -251,9 +251,9 @@ int main(void)
               cnc_buffer_equal_string(prompt->data, ":q")) ||
              (term->mode == MODE_CMD && user_input == 'q'))
     {
+      cnc_widget_reset(prompt);
       disconnect_from_server(net, infobar, term, display, prompt);
       end_app = true;
-      cnc_widget_reset(prompt);
     }
 
     // user wants to connect
@@ -263,6 +263,7 @@ int main(void)
     {
       if (!net->connected)
       {
+        cnc_widget_reset(prompt);
         set_info(infobar, "connecting...", COLOR_WHITE_BG, prompt, display);
         cnc_terminal_update_and_redraw(term);
         net_connect_result = connect_to_server(net);
@@ -301,8 +302,6 @@ int main(void)
           pthread_detach(receiving_thread);
         }
       }
-
-      cnc_widget_reset(prompt);
     }
 
     // user wants to disconnect from server
@@ -310,8 +309,8 @@ int main(void)
               cnc_buffer_equal_string(prompt->data, ":d")) ||
              (term->mode == MODE_CMD && user_input == 'd'))
     {
-      disconnect_from_server(net, infobar, term, display, prompt);
       cnc_widget_reset(prompt);
+      disconnect_from_server(net, infobar, term, display, prompt);
     }
 
     // user wants to send message to the server
