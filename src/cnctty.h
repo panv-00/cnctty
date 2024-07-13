@@ -8,7 +8,7 @@
 #include <pthread.h>
 
 #define TERM_MIN_WIDTH 68
-#define TERM_MIN_HEIGHT 18
+#define TERM_MIN_HEIGHT 15
 
 typedef struct
 {
