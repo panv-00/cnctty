@@ -173,6 +173,9 @@ void cnc_widget_destroy(cnc_widget *w);
 #define ARROW_DN 66
 #define ARROW_RT 67
 #define ARROW_LT 68
+#define PAGE_UP 53
+#define PAGE_DN 54
+#define PAGE_UP_DN 126
 
 // Custom Escape Characters
 #define TAB_KEY 1009
@@ -182,6 +185,9 @@ void cnc_widget_destroy(cnc_widget *w);
 #define ARROW_DN_KEY 1066
 #define ARROW_RT_KEY 1067
 #define ARROW_LT_KEY 1068
+#define PAGE_UP_KEY 1053
+#define PAGE_DN_KEY 1054
+#define PAGE_UP_DN_KEY 1126
 #define BACKSPACE_KEY 127
 #define ENTER_KEY 10
 
@@ -199,6 +205,10 @@ void _VimMode__h(cnc_widget *w);
 void _VimMode__x(cnc_widget *w);
 void _VimMode__0(cnc_widget *w);
 void _VimMode__$(cnc_widget *w);
+
+// page_up | page_down
+void _PageUp(cnc_widget *w);
+void _PageDn(cnc_widget *w);
 
 typedef enum
 {

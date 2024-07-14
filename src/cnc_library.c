@@ -644,6 +644,42 @@ void _VimMode__$(cnc_widget *w)
   }
 }
 
+// page_up | page_down
+
+void _PageUp(cnc_widget *w)
+{
+  if (!w || w->type != WIDGET_DISPLAY)
+  {
+    return;
+  }
+
+  if (w->index + w->frame.height < w->data_index)
+  {
+    w->index += w->frame.height;
+  }
+
+  else if (w->data_index > w->frame.height)
+  {
+    w->index = w->data_index - w->frame.height;
+  }
+}
+
+void _PageDn(cnc_widget *w)
+{
+  if (w && w->type == WIDGET_DISPLAY && w->index > 0)
+  {
+    if (w->index > w->frame.height)
+    {
+      w->index -= w->frame.height;
+    }
+
+    else
+    {
+      w->index = 0;
+    }
+  }
+}
+
 size_t _index_at_cr(cnc_terminal *t, size_t c, size_t r)
 {
   return (r - 1) * (t->scr_cols + 16) + c + 9;
@@ -1385,6 +1421,26 @@ int _cnc_terminal_get_user_input(cnc_terminal *t)
         case ARROW_LT:
           _VimMode__h(fw);
           return ARROW_LT_KEY;
+        case PAGE_UP:
+        {
+          int up_down_result = cnc_terminal_getch(t);
+
+          if (up_down_result == PAGE_UP_DN)
+          {
+            _PageUp(fw);
+            return PAGE_UP_KEY;
+          }
+        }
+        case PAGE_DN:
+        {
+          int up_down_result = cnc_terminal_getch(t);
+
+          if (up_down_result == PAGE_UP_DN)
+          {
+            _PageDn(fw);
+            return PAGE_DN_KEY;
+          }
+        }
         default:
           return ESCAPE_KEY;
         }
