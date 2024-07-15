@@ -1403,7 +1403,7 @@ int _cnc_terminal_get_user_input(cnc_terminal *t)
     {
       int next_input = cnc_terminal_getch(t);
 
-      if (next_input == ARROW)
+      if (next_input == CSI)
       {
         int arrow_result = cnc_terminal_getch(t);
 

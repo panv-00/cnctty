@@ -176,7 +176,7 @@ void cnc_widget_destroy(cnc_widget *w);
 #define ARROW_DN 66
 #define ARROW_RT 67
 #define ARROW_LT 68
-#define ARROW 91
+#define CSI 91
 #define TILDE 126
 
 // Custom Escape Characters
@@ -192,8 +192,6 @@ void cnc_widget_destroy(cnc_widget *w);
 #define KEY_ARROW_DN 1066
 #define KEY_ARROW_RT 1067
 #define KEY_ARROW_LT 1068
-#define KEY_ARROW 1091
-#define KEY_TILDE 1126
 
 // Terminal Size Error
 #define TERM_TOO_SMALL -1
