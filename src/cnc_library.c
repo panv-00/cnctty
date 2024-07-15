@@ -1411,56 +1411,77 @@ int _cnc_terminal_get_user_input(cnc_terminal *t)
         {
         case ARROW_UP:
           _VimMode__k(fw);
-          return ARROW_UP_KEY;
+          return KEY_ARROW_UP;
         case ARROW_DN:
           _VimMode__j(fw);
-          return ARROW_DN_KEY;
+          return KEY_ARROW_DN;
         case ARROW_RT:
           _VimMode__l(fw);
-          return ARROW_RT_KEY;
+          return KEY_ARROW_RT;
         case ARROW_LT:
           _VimMode__h(fw);
-          return ARROW_LT_KEY;
+          return KEY_ARROW_LT;
         case PAGE_UP:
         {
-          int up_down_result = cnc_terminal_getch(t);
-
-          if (up_down_result == PAGE_UP_DN)
+          if (cnc_terminal_getch(t) == TILDE)
           {
             _PageUp(fw);
-            return PAGE_UP_KEY;
+            return KEY_PAGE_UP;
           }
+
+          return KEY_ESCAPE;
         }
         case PAGE_DN:
         {
-          int up_down_result = cnc_terminal_getch(t);
-
-          if (up_down_result == PAGE_UP_DN)
+          if (cnc_terminal_getch(t) == TILDE)
           {
             _PageDn(fw);
-            return PAGE_DN_KEY;
+            return KEY_PAGE_DN;
           }
+
+          return KEY_ESCAPE;
         }
+        case INSERT:
+        {
+          if (cnc_terminal_getch(t) == TILDE)
+          {
+            cnc_terminal_set_mode(t, MODE_INS);
+            return KEY_INSERT;
+          }
+
+          return KEY_ESCAPE;
+        }
+
+        case DELETE:
+        {
+          if (cnc_terminal_getch(t) == TILDE)
+          {
+            return KEY_DELETE;
+          }
+
+          return KEY_ESCAPE;
+        }
+
         default:
-          return ESCAPE_KEY;
+          return KEY_ESCAPE;
         }
       }
 
       else
       {
         cnc_terminal_set_mode(t, MODE_CMD);
-        return ESCAPE_KEY;
+        return KEY_ESCAPE;
       }
     }
 
     cnc_terminal_set_mode(t, MODE_CMD);
-    return ESCAPE_KEY;
+    return KEY_ESCAPE;
   }
 
   else if (result == TAB)
   {
     cnc_terminal_focus_next(t);
-    return TAB_KEY;
+    return KEY_TAB;
   }
 
   // check terminal mode to apply standard behavior
@@ -1559,7 +1580,7 @@ int _cnc_terminal_get_user_input(cnc_terminal *t)
       // user presses ENTER key on a WIDGET_PROMPT
       if (result == 10 || result == 13)
       {
-        result = ENTER_KEY;
+        result = KEY_ENTER;
       }
 
       // if result is a valid character
@@ -1577,7 +1598,7 @@ int _cnc_terminal_get_user_input(cnc_terminal *t)
       }
 
       // result is backspace
-      if (result == BACKSPACE_KEY)
+      if (result == KEY_BACKSPACE)
       {
         if (fw->data_index > 0)
         {

@@ -168,28 +168,32 @@ void cnc_widget_destroy(cnc_widget *w);
 // Escape Characters
 #define TAB 9
 #define ESCAPE 27
-#define ARROW 91
+#define INSERT 50
+#define DELETE 51
+#define PAGE_UP 53
+#define PAGE_DN 54
 #define ARROW_UP 65
 #define ARROW_DN 66
 #define ARROW_RT 67
 #define ARROW_LT 68
-#define PAGE_UP 53
-#define PAGE_DN 54
-#define PAGE_UP_DN 126
+#define ARROW 91
+#define TILDE 126
 
 // Custom Escape Characters
-#define TAB_KEY 1009
-#define ESCAPE_KEY 1027
-#define ARROW_KEY 1091
-#define ARROW_UP_KEY 1065
-#define ARROW_DN_KEY 1066
-#define ARROW_RT_KEY 1067
-#define ARROW_LT_KEY 1068
-#define PAGE_UP_KEY 1053
-#define PAGE_DN_KEY 1054
-#define PAGE_UP_DN_KEY 1126
-#define BACKSPACE_KEY 127
-#define ENTER_KEY 10
+#define KEY_ENTER 10
+#define KEY_BACKSPACE 127
+#define KEY_TAB 1009
+#define KEY_ESCAPE 1027
+#define KEY_INSERT 1050
+#define KEY_DELETE 1051
+#define KEY_PAGE_UP 1053
+#define KEY_PAGE_DN 1054
+#define KEY_ARROW_UP 1065
+#define KEY_ARROW_DN 1066
+#define KEY_ARROW_RT 1067
+#define KEY_ARROW_LT 1068
+#define KEY_ARROW 1091
+#define KEY_TILDE 1126
 
 // Terminal Size Error
 #define TERM_TOO_SMALL -1

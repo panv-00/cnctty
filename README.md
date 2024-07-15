@@ -54,6 +54,7 @@ $ ./cnctty
 | **INSERT** | <kbd>Ctrl</kbd> + <kbd>c</kbd> | any     | Switch to **CMD** mode        |
 | **INSERT** | <kbd>LEFT</kbd>                | PROMPT  | Move cursor left          |
 | **INSERT** | <kbd>RIGHT</kbd>               | PROMPT  | Move cursor right         |
+| **CMD**    | <kbd>INS</kbd>                 | any     | Switch to **INSERT** mode     |
 | **CMD**    | <kbd>i</kbd>                   | any     | Switch to **INSERT** mode     |
 | **CMD**    | <kbd>a</kbd>                   | PROMPT  | Append in **INSERT** mode     |
 | **CMD**    | <kbd>A</kbd>                   | PROMPT  | Append end in **INSERT** mode |
@@ -65,6 +66,8 @@ $ ./cnctty
 | **CMD**    | <kbd>k</kbd>                   | DISPLAY | Scroll up                 |
 | **CMD**    | <kbd>0</kbd>                   | DISPLAY | Scroll to first           |
 | **CMD**    | <kbd>$</kbd>                   | DISPLAY | Scroll to last            |
+| **CMD**    | <kbd>PAGE UP</kbd>             | DISPLAY | Scroll one page up        |
+| **CMD**    | <kbd>PAGE DOWN</kbd>           | DISPLAY | Scroll one page down      |
 
 **PROMPT commands**
 | Mode   | Command      | Action            |

@@ -131,12 +131,15 @@ int cnc_net_receive(cnc_net *n)
 
       if (bytes_received < 0)
       {
+        cnc_net_disconnect(n);
+
         return ERROR_RECEIVING_DATA;
       }
 
       if (bytes_received == 0)
       {
         cnc_net_disconnect(n);
+
         return CONNECTION_CLOSED;
       }
 

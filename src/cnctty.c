@@ -197,7 +197,7 @@ int main(void)
   {
     user_input = cnc_terminal_get_user_input(term);
 
-    if (user_input == ENTER_KEY && prompt->data->length > 0)
+    if (user_input == KEY_ENTER && prompt->data->length > 0)
     {
       cnc_buffer_set_text(username, prompt->data->contents);
       cnc_widget_reset(prompt);
@@ -216,7 +216,7 @@ int main(void)
   {
     user_input = cnc_terminal_get_user_input(term);
 
-    if (user_input == ENTER_KEY)
+    if (user_input == KEY_ENTER)
     {
       if (prompt->data->length > 0)
       {
@@ -237,7 +237,7 @@ int main(void)
   while (!end_app)
   {
     // focus changed: refresh the infobar
-    if (user_input == TAB_KEY)
+    if (user_input == KEY_TAB)
     {
       cnc_buffer_replace_text(infobar->data, 14, 10,
                               prompt->has_focus    ? "PROMPT :"
@@ -247,7 +247,7 @@ int main(void)
     }
 
     // user wants to quit
-    else if ((term->mode == MODE_INS && user_input == ENTER_KEY &&
+    else if ((term->mode == MODE_INS && user_input == KEY_ENTER &&
               cnc_buffer_equal_string(prompt->data, ":q")) ||
              (term->mode == MODE_CMD && user_input == 'q'))
     {
@@ -257,7 +257,7 @@ int main(void)
     }
 
     // user wants to connect
-    else if ((term->mode == MODE_INS && user_input == ENTER_KEY &&
+    else if ((term->mode == MODE_INS && user_input == KEY_ENTER &&
               cnc_buffer_equal_string(prompt->data, ":c")) ||
              (term->mode == MODE_CMD && user_input == 'c'))
     {
@@ -305,7 +305,7 @@ int main(void)
     }
 
     // user wants to disconnect from server
-    else if ((term->mode == MODE_INS && user_input == ENTER_KEY &&
+    else if ((term->mode == MODE_INS && user_input == KEY_ENTER &&
               cnc_buffer_equal_string(prompt->data, ":d")) ||
              (term->mode == MODE_CMD && user_input == 'd'))
     {
@@ -314,7 +314,7 @@ int main(void)
     }
 
     // user wants to send message to the server
-    else if (term->mode == MODE_INS && user_input == ENTER_KEY)
+    else if (term->mode == MODE_INS && user_input == KEY_ENTER)
     {
       if (net->connected)
       {
