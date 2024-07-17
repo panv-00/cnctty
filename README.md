@@ -25,7 +25,7 @@ I tried to separate the user interface from the main routines logic in my previo
 ### Building
 
 ```bash
-$ git clone --recurse-submodules https://github.com/yourusername/main_project.git
+$ git clone --recurse-submodules https://github.com/panv-00/cnctty.git
 ...
 
 $ cd cnctty
