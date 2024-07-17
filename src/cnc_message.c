@@ -109,8 +109,8 @@ void message_parse(const char *message_string, size_t length,
 
     if (cnc_buffer_locate_string(msg_buf, " (private):", &tmp_index))
     {
-      // add received sign (FR: )
-      cnc_buffer_append(databuffer, "FR ");
+      // add received sign (<<: )
+      cnc_buffer_append(databuffer, "<< ");
 
       // message from -> tmp_buffer
       cnc_buffer_replace_text(tmp_buf, 0, tmp_index, msg_buf->contents, 0);
@@ -154,8 +154,8 @@ void message_parse(const char *message_string, size_t length,
     {
       if (cnc_buffer_locate_string(msg_buf, ":", &end))
       {
-        // add sent sign (TO: )
-        cnc_buffer_append(databuffer, "TO ");
+        // add sent sign (>>: )
+        cnc_buffer_append(databuffer, ">> ");
 
         // user to -> tmp_buffer
         cnc_buffer_replace_text(tmp_buf, 0, end - start, msg_buf->contents,
