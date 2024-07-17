@@ -122,6 +122,7 @@ int cnc_net_receive(cnc_net *n)
     else if (result == 0)
     {
       // timeout...
+      usleep(100000);
     }
 
     else

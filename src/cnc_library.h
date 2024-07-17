@@ -165,52 +165,28 @@ void cnc_widget_destroy(cnc_widget *w);
 // CTRL-KEY Combination
 #define CTRL_KEY(k) ((k) & 0x1f)
 
-// Escape Characters
-#define TAB 9
-#define ESCAPE 27
-#define INSERT 50
-#define DELETE 51
-#define PAGE_UP 53
-#define PAGE_DN 54
-#define ARROW_UP 65
-#define ARROW_DN 66
-#define ARROW_RT 67
-#define ARROW_LT 68
-#define CSI 91
-#define TILDE 126
-
-// Custom Escape Characters
+// Custom Key Characters
+#define KEY_TAB 9
 #define KEY_ENTER 10
+#define KEY_ESCAPE 27
+#define KEY_SPACE 32
 #define KEY_BACKSPACE 127
-#define KEY_TAB 1009
-#define KEY_ESCAPE 1027
-#define KEY_INSERT 1050
-#define KEY_DELETE 1051
-#define KEY_PAGE_UP 1053
-#define KEY_PAGE_DN 1054
-#define KEY_ARROW_UP 1065
-#define KEY_ARROW_DN 1066
-#define KEY_ARROW_RT 1067
-#define KEY_ARROW_LT 1068
+#define KEY_ARROW_UP 183
+#define KEY_ARROW_DN 184
+#define KEY_ARROW_RT 185
+#define KEY_ARROW_LT 186
+#define KEY_END 188
+#define KEY_HOME 190
+#define KEY_INSERT 294
+#define KEY_DELETE 295
+#define KEY_PAGE_UP 297
+#define KEY_PAGE_DN 298
 
 // Terminal Size Error
 #define TERM_TOO_SMALL -1
 
 // Position Cursor Function
 void POSCURSOR(size_t c, size_t r);
-
-// Vim-Like functions
-void _VimMode__k(cnc_widget *w);
-void _VimMode__j(cnc_widget *w);
-void _VimMode__l(cnc_widget *w);
-void _VimMode__h(cnc_widget *w);
-void _VimMode__x(cnc_widget *w);
-void _VimMode__0(cnc_widget *w);
-void _VimMode__$(cnc_widget *w);
-
-// page_up | page_down
-void _PageUp(cnc_widget *w);
-void _PageDn(cnc_widget *w);
 
 typedef enum
 {
@@ -239,9 +215,6 @@ typedef struct
 } cnc_terminal;
 
 // terminal functions declaration
-// screen buffer index calculator
-size_t _index_at_cr(cnc_terminal *t, size_t c, size_t r);
-
 cnc_terminal *cnc_terminal_init(size_t min_width, size_t min_height);
 bool cnc_terminal_get_size(cnc_terminal *t);
 void cnc_terminal_set_mode(cnc_terminal *t, cnc_terminal_mode mode);

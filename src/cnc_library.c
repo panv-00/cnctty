@@ -1,5 +1,25 @@
 #include "cnc_library.h"
 
+/*** 0. Static Functions Declaration ***/
+
+// Vim-Like functions
+static void _VimMode__k(cnc_widget *w);
+static void _VimMode__j(cnc_widget *w);
+static void _VimMode__l(cnc_widget *w);
+static void _VimMode__h(cnc_widget *w);
+static void _VimMode__x(cnc_widget *w);
+static void _VimMode__0(cnc_widget *w);
+static void _VimMode__$(cnc_widget *w);
+
+// page_up | page_down
+static void _PageUp(cnc_widget *w);
+static void _PageDn(cnc_widget *w);
+static void _InsertChar(cnc_widget *w, char c);
+static void _DeleteChar(cnc_widget *w);
+
+// screen buffer index calculator
+static size_t _index_at_cr(cnc_terminal *t, size_t c, size_t r);
+
 /*** 1. COLORS ***/
 int _color_code_to_color(int color_code, char **color)
 {
@@ -558,7 +578,7 @@ void POSCURSOR(size_t c, size_t r)
 }
 
 // Vim-Like functions
-void _VimMode__k(cnc_widget *w)
+static void _VimMode__k(cnc_widget *w)
 {
   if (w && w->type == WIDGET_DISPLAY &&
       w->index + w->frame.height < w->data_index)
@@ -567,7 +587,7 @@ void _VimMode__k(cnc_widget *w)
   }
 }
 
-void _VimMode__j(cnc_widget *w)
+static void _VimMode__j(cnc_widget *w)
 {
   if (w && w->type == WIDGET_DISPLAY && w->index > 0)
   {
@@ -575,7 +595,7 @@ void _VimMode__j(cnc_widget *w)
   }
 }
 
-void _VimMode__l(cnc_widget *w)
+static void _VimMode__l(cnc_widget *w)
 {
   if (w && w->type == WIDGET_PROMPT && w->data_index < w->data->length)
   {
@@ -588,7 +608,7 @@ void _VimMode__l(cnc_widget *w)
   }
 }
 
-void _VimMode__h(cnc_widget *w)
+static void _VimMode__h(cnc_widget *w)
 {
   if (w && w->type == WIDGET_PROMPT && w->data_index > 0)
   {
@@ -601,7 +621,7 @@ void _VimMode__h(cnc_widget *w)
   }
 }
 
-void _VimMode__x(cnc_widget *w)
+static void _VimMode__x(cnc_widget *w)
 {
   if (w && w->type == WIDGET_PROMPT && w->data_index < w->data->length)
   {
@@ -609,7 +629,7 @@ void _VimMode__x(cnc_widget *w)
   }
 }
 
-void _VimMode__0(cnc_widget *w)
+static void _VimMode__0(cnc_widget *w)
 {
   if (w && w->type == WIDGET_PROMPT)
   {
@@ -626,7 +646,7 @@ void _VimMode__0(cnc_widget *w)
   }
 }
 
-void _VimMode__$(cnc_widget *w)
+static void _VimMode__$(cnc_widget *w)
 {
   if (w && w->type == WIDGET_PROMPT)
   {
@@ -644,9 +664,7 @@ void _VimMode__$(cnc_widget *w)
   }
 }
 
-// page_up | page_down
-
-void _PageUp(cnc_widget *w)
+static void _PageUp(cnc_widget *w)
 {
   if (!w || w->type != WIDGET_DISPLAY)
   {
@@ -664,7 +682,7 @@ void _PageUp(cnc_widget *w)
   }
 }
 
-void _PageDn(cnc_widget *w)
+static void _PageDn(cnc_widget *w)
 {
   if (w && w->type == WIDGET_DISPLAY && w->index > 0)
   {
@@ -680,7 +698,42 @@ void _PageDn(cnc_widget *w)
   }
 }
 
-size_t _index_at_cr(cnc_terminal *t, size_t c, size_t r)
+static void _InsertChar(cnc_widget *w, char c)
+{
+  if (w && w->type == WIDGET_PROMPT)
+  {
+    if (cnc_buffer_insert_char(w->data, w->data_index, 1, c))
+    {
+      w->data_index++;
+
+      if (w->data_index > w->frame.width - 3)
+      {
+        w->index++;
+      }
+    }
+  }
+}
+
+static void _DeleteChar(cnc_widget *w)
+{
+  if (w && w->type == WIDGET_PROMPT)
+  {
+    if (w->data_index > 0)
+    {
+      if (cnc_buffer_delete_char(w->data, w->data_index - 1))
+      {
+        w->data_index--;
+
+        if (w->index > 0)
+        {
+          w->index--;
+        }
+      }
+    }
+  }
+}
+
+static size_t _index_at_cr(cnc_terminal *t, size_t c, size_t r)
 {
   return (r - 1) * (t->scr_cols + 16) + c + 9;
 }
@@ -1329,20 +1382,30 @@ void cnc_terminal_set_row_bg(cnc_terminal *t, size_t row, const char *color)
 
 int cnc_terminal_getch(cnc_terminal *t)
 {
-  int result;
-  char c;
   uint16_t cols = t->scr_cols;
   uint16_t rows = t->scr_rows;
 
-  while ((result = read(STDIN_FILENO, &c, 1)) != 1)
+  int bytes_read;
+  int ch;
+  int ch_sum = 0;
+
+  while (ch_sum == 0)
   {
-    if (result == -1 && errno != EAGAIN)
+
+    ioctl(STDIN_FILENO, FIONREAD, &bytes_read);
+
+    ch_sum = 0;
+
+    for (int i = 0; i < bytes_read; i++)
     {
-      return 0;
+      ch = getchar();
+      ch_sum += ch;
     }
 
-    if (result == 0)
+    if (ch_sum == 0)
     {
+      // detect terminal resize
+      // FIXME: VERY EXPENSIVE. CHECKING TERMINAL SIZE VERY OFTEN
       if (!cnc_terminal_get_size(t))
       {
         return 0;
@@ -1360,265 +1423,123 @@ int cnc_terminal_getch(cnc_terminal *t)
         cnc_terminal_update_and_redraw(t);
       }
 
-      usleep(10);
+      usleep(10000);
     }
   }
 
-  // do not return any key presses if terminal size is not suitable
-  if (t->scr_cols < t->min_width || t->scr_rows < t->min_height)
-  {
-    return TERM_TOO_SMALL;
-  }
-
-  return c;
+  return ch_sum;
 }
 
 int _cnc_terminal_get_user_input(cnc_terminal *t)
 {
-  fd_set rfds;
-  struct timeval tv;
-  int retval;
-  int result;
-
-  FD_ZERO(&rfds);
-  FD_SET(STDIN_FILENO, &rfds);
-
-  tv.tv_sec = 0;
-  tv.tv_usec = 100000; // 100 milliseconds
-
   cnc_widget *fw = t->focused_widget;
+  int result = cnc_terminal_getch(t);
 
-  result = cnc_terminal_getch(t);
-
-  if (result == ESCAPE)
+  // exit insert mode with ctrl-c
+  if (t->mode == MODE_INS && result == CTRL_KEY('c'))
   {
-    retval = select(STDIN_FILENO + 1, &rfds, NULL, NULL, &tv);
-
-    if (retval == -1)
-    {
-      return -1;
-    }
-
-    else if (retval)
-    {
-      int next_input = cnc_terminal_getch(t);
-
-      if (next_input == CSI)
-      {
-        int arrow_result = cnc_terminal_getch(t);
-
-        switch (arrow_result)
-        {
-        case ARROW_UP:
-          _VimMode__k(fw);
-          return KEY_ARROW_UP;
-        case ARROW_DN:
-          _VimMode__j(fw);
-          return KEY_ARROW_DN;
-        case ARROW_RT:
-          _VimMode__l(fw);
-          return KEY_ARROW_RT;
-        case ARROW_LT:
-          _VimMode__h(fw);
-          return KEY_ARROW_LT;
-        case PAGE_UP:
-        {
-          if (cnc_terminal_getch(t) == TILDE)
-          {
-            _PageUp(fw);
-            return KEY_PAGE_UP;
-          }
-
-          return KEY_ESCAPE;
-        }
-        case PAGE_DN:
-        {
-          if (cnc_terminal_getch(t) == TILDE)
-          {
-            _PageDn(fw);
-            return KEY_PAGE_DN;
-          }
-
-          return KEY_ESCAPE;
-        }
-        case INSERT:
-        {
-          if (cnc_terminal_getch(t) == TILDE)
-          {
-            cnc_terminal_set_mode(t, MODE_INS);
-            return KEY_INSERT;
-          }
-
-          return KEY_ESCAPE;
-        }
-
-        case DELETE:
-        {
-          if (cnc_terminal_getch(t) == TILDE)
-          {
-            return KEY_DELETE;
-          }
-
-          return KEY_ESCAPE;
-        }
-
-        default:
-          return KEY_ESCAPE;
-        }
-      }
-
-      else
-      {
-        cnc_terminal_set_mode(t, MODE_CMD);
-        return KEY_ESCAPE;
-      }
-    }
-
     cnc_terminal_set_mode(t, MODE_CMD);
-    return KEY_ESCAPE;
+    return result;
   }
 
-  else if (result == TAB)
+  // only when prompt has focus
+  if (t->mode == MODE_INS && fw && fw->type == WIDGET_PROMPT)
   {
+    // user presses ENTER key on a WIDGET_PROMPT
+    if (result == 10 || result == 13)
+    {
+      result = KEY_ENTER;
+      return result;
+    }
+
+    // result is a valid character
+    if (result >= ' ' && result <= '~')
+    {
+      _InsertChar(fw, result);
+      return result;
+    }
+
+    // result is backspace
+    if (result == KEY_BACKSPACE)
+    {
+      _DeleteChar(fw);
+      return result;
+    }
+  }
+
+  switch (result)
+  {
+  case KEY_ARROW_UP:
+  case 'k':
+    _VimMode__k(fw);
+    return result;
+
+  case KEY_ARROW_DN:
+  case 'j':
+    _VimMode__j(fw);
+    return result;
+
+  case KEY_ARROW_RT:
+  case 'l':
+    _VimMode__l(fw);
+    return result;
+
+  case KEY_ARROW_LT:
+  case 'h':
+    _VimMode__h(fw);
+    return result;
+
+  case KEY_PAGE_UP:
+    _PageUp(fw);
+    return result;
+
+  case KEY_PAGE_DN:
+    _PageDn(fw);
+    return result;
+
+  case KEY_ESCAPE:
+    cnc_terminal_set_mode(t, MODE_CMD);
+    return result;
+
+  case KEY_INSERT:
+  case 'i':
+    cnc_terminal_set_mode(t, MODE_INS);
+    return result;
+
+  case KEY_TAB:
     cnc_terminal_focus_next(t);
-    return KEY_TAB;
+    return result;
+
+  case 'a':
+    cnc_terminal_set_mode(t, MODE_INS);
+
+    if (fw && fw->type == WIDGET_PROMPT && fw->data_index < fw->data->length)
+    {
+      fw->data_index++;
+    }
+
+    return result;
+
+  case 'A':
+    _VimMode__$(fw);
+    cnc_terminal_set_mode(t, MODE_INS);
+    return result;
+
+  case 'x':
+    _VimMode__x(fw);
+    return result;
+
+  case '0':
+    _VimMode__0(fw);
+    return result;
+
+  case '$':
+    _VimMode__$(fw);
+    return result;
+
+  default:
+    return result;
   }
-
-  // check terminal mode to apply standard behavior
-  // COMMAND MODE
-  if (t->mode == MODE_CMD)
-  {
-    switch (result)
-    {
-    case 'i':
-      cnc_terminal_set_mode(t, MODE_INS);
-      break;
-
-    case 'a':
-      cnc_terminal_set_mode(t, MODE_INS);
-
-      if (fw && fw->type == WIDGET_PROMPT && fw->data_index < fw->data->length)
-      {
-        fw->data_index++;
-      }
-
-      break;
-
-    case 'A':
-      _VimMode__$(fw);
-      cnc_terminal_set_mode(t, MODE_INS);
-      break;
-
-    case 'j':
-      _VimMode__j(fw);
-      break;
-
-    case 'k':
-      _VimMode__k(fw);
-      break;
-
-    case 'l':
-      _VimMode__l(fw);
-      break;
-
-    case 'h':
-      _VimMode__h(fw);
-      break;
-
-    case 'x':
-      _VimMode__x(fw);
-      break;
-
-    case '0':
-      _VimMode__0(fw);
-      break;
-
-    case '$':
-      _VimMode__$(fw);
-      break;
-
-    default:
-      break;
-    }
-  }
-
-  // INSERT MODE
-  else
-  {
-    // exit insert mode with ctrl-c
-    if (result == CTRL_KEY('c'))
-    {
-      cnc_terminal_set_mode(t, MODE_CMD);
-    }
-
-    else if (fw && fw->type == WIDGET_DISPLAY)
-    {
-      // allow j, k, 0, and $ movement in display widget
-      if (result == 'j')
-      {
-        _VimMode__j(fw);
-      }
-
-      if (result == 'k')
-      {
-        _VimMode__k(fw);
-      }
-
-      if (result == '$')
-      {
-        _VimMode__$(fw);
-      }
-
-      if (result == '0')
-      {
-        _VimMode__0(fw);
-      }
-    }
-
-    else if (fw && fw->type == WIDGET_PROMPT)
-    {
-      // user presses ENTER key on a WIDGET_PROMPT
-      if (result == 10 || result == 13)
-      {
-        result = KEY_ENTER;
-      }
-
-      // if result is a valid character
-      if (result >= ' ' && result <= '~')
-      {
-        if (cnc_buffer_insert_char(fw->data, fw->data_index, 1, (char)result))
-        {
-          fw->data_index++;
-
-          if (fw->data_index > fw->frame.width - 3)
-          {
-            fw->index++;
-          }
-        }
-      }
-
-      // result is backspace
-      if (result == KEY_BACKSPACE)
-      {
-        if (fw->data_index > 0)
-        {
-          if (cnc_buffer_delete_char(fw->data, fw->data_index - 1))
-          {
-            fw->data_index--;
-
-            if (fw->index > 0)
-            {
-              fw->index--;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  cnc_terminal_update_and_redraw(t);
-
-  return result;
 }
 
 int cnc_terminal_get_user_input(cnc_terminal *t)
