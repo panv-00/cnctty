@@ -7,7 +7,7 @@
 #include <stddef.h>
 #include <time.h>
 
-#include "cnc_library.h"
+#include "cnc_library/cnc_library.h"
 
 void add_buffer_to_messages(const char *buffer, size_t bytes_received,
                             cnc_buffer *message_buffer, const char *username,

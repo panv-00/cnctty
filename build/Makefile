@@ -1,21 +1,19 @@
 CC=gcc
-PKGS=
 CFLAGS=-Wall -O3 -g -lssl -lcrypto -pthread
-LIBS=
-VPATH=../src
+VPATH=../src:../src/cnc_library
 
 OBJECTS= \
 	cnc_library.o \
 	cnc_net.o \
 	cnc_message.o \
 
-DEPLIST= \
-
 default: $(OBJECTS)
 	$(CC) -o ../cnctty ../src/cnctty.c \
 		$(OBJECTS) \
-		$(CFLAGS) \
-		$(LIBS)
+		$(CFLAGS)
 	
-%.o: %.c %.h $(DEPLIST)
-	$(CC) -c $< -o $*.o $(CFLAGS)
+%.o: ../src/%.c ../scr/%.h
+	$(CC) -c $< -o $*.o
+
+cnc_library.o: cnc_library/cnc_library.c cnc_library/cnc_library.h
+	$(CC) -c $< -o $*.o

@@ -1,7 +1,7 @@
 #ifndef CNC_TTY_H
 #define CNC_TTY_H
 
-#include "cnc_library.h"
+#include "cnc_library/cnc_library.h"
 #include "cnc_message.h"
 #include "cnc_net.h"
 
