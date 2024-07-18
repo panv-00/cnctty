@@ -1,3 +1,3 @@
 [submodule "src/cnc_library"]
 	path = src/cnc_library
-	url = https://github.com/panv-00/cnc_library.git
+	url = ../cnc_library.git
