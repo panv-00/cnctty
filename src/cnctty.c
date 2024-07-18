@@ -154,9 +154,11 @@ int main(void)
 
   // initial screen setup
   cnc_buffer_set_text(display->data, "Welcome to cnctty v 1.01");
+
 #ifdef DEVEL_MODE
   cnc_buffer_append(display->data, " (development mode)");
 #endif
+
   set_info(infobar, "offline", COLOR_RED_BG, prompt, display);
   cnc_terminal_set_mode(term, MODE_INS);
 
