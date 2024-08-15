@@ -192,7 +192,7 @@ int main(void)
 
   // user interface begins here
   // initially get the username
-  cnc_buffer_append(display->data, "\n    Pick a username: _\n");
+  cnc_buffer_append(display->data, "\n    Pick a username: _");
   cnc_terminal_update_and_redraw(term);
 
   while (true)
@@ -209,9 +209,8 @@ int main(void)
 
   // now get the password
   cnc_buffer_delete_char(display->data, display->data->length - 1);
-  cnc_buffer_delete_char(display->data, display->data->length - 1);
   cnc_buffer_append(display->data, username->contents);
-  cnc_buffer_append(display->data, "\n    Password ? _\n");
+  cnc_buffer_append(display->data, "\n    Password ? _");
   cnc_terminal_update_and_redraw(term);
 
   while (true)
@@ -230,7 +229,6 @@ int main(void)
     }
   }
 
-  cnc_buffer_delete_char(display->data, display->data->length - 1);
   cnc_buffer_delete_char(display->data, display->data->length - 1);
   cnc_buffer_append(display->data,
                     password->length > 0 ? "yes..\n" : "no...\n");
