@@ -137,7 +137,7 @@ int main(void)
   }
 
   // initial screen setup
-  cnc_buffer_set_text(display->data, "Welcome to cnctty v 1.01");
+  cnc_buffer_set_text(display->data, "Welcome to cnctty v 1.02");
 
 #ifdef DEVEL_MODE
   cnc_buffer_append(display->data, " (development mode)");
