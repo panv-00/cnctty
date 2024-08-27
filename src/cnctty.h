@@ -5,23 +5,13 @@
 #include "cnc_message.h"
 #include "cnc_net.h"
 
-#include <pthread.h>
-
 #define TERM_MIN_WIDTH 68
 #define TERM_MIN_HEIGHT 15
-
-typedef struct
-{
-  cnc_net *net;
-  bool *thread_completed;
-
-} ThreadData;
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
               cnc_widget *d);
 
 int connect_to_server(cnc_net *n);
-void *receive_net_data(void *arg);
 void disconnect_from_server(cnc_net *net, cnc_widget *infobar,
                             cnc_terminal *term, cnc_widget *display,
                             cnc_widget *prompt);

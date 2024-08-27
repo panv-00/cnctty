@@ -101,56 +101,29 @@ int cnc_net_connect(cnc_net *n)
 
 int cnc_net_receive(cnc_net *n)
 {
-  while (!n->stop_receiving)
+  char buffer[BUFSIZE];
+
+  int bytes_received = SSL_read(n->ssl, buffer, sizeof(buffer));
+
+  if (bytes_received < 0)
   {
-    int fd = SSL_get_rfd(n->ssl);
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-    FD_SET(fd, &read_fds);
+    cnc_net_disconnect(n);
 
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 100000;
-
-    int result = select(fd + 1, &read_fds, NULL, NULL, &timeout);
-
-    if (result < 0)
-    {
-      return ERROR_RECEIVING_DATA;
-    }
-
-    else if (result == 0)
-    {
-      // timeout...
-      usleep(100000);
-    }
-
-    else
-    {
-      char buffer[BUFSIZE];
-      int bytes_received = SSL_read(n->ssl, buffer, sizeof(buffer));
-
-      if (bytes_received < 0)
-      {
-        cnc_net_disconnect(n);
-
-        return ERROR_RECEIVING_DATA;
-      }
-
-      if (bytes_received == 0)
-      {
-        cnc_net_disconnect(n);
-
-        return CONNECTION_CLOSED;
-      }
-
-      add_buffer_to_messages(buffer, bytes_received, n->message_buffer,
-                             n->username->contents, n->databuffer, n->terminal,
-                             n->infobar);
-    }
+    return ERROR_RECEIVING_DATA;
   }
 
-  return NO_NET_ERROR;
+  // if (bytes_received == 0)
+  // {
+  //   cnc_net_disconnect(n);
+  //
+  //   return CONNECTION_CLOSED;
+  // }
+
+  add_buffer_to_messages(buffer, bytes_received, n->message_buffer,
+                         n->username->contents, n->databuffer, n->terminal,
+                         n->infobar);
+
+  return bytes_received;
 }
 
 void cnc_net_disconnect(cnc_net *n)

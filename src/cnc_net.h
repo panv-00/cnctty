@@ -14,11 +14,11 @@
 
 // network errors
 #define NO_NET_ERROR 0
-#define SOCKET_ERROR 100
-#define SERVER_ERROR 200
-#define SSL_ERROR 300
-#define ERROR_RECEIVING_DATA 400
-#define CONNECTION_CLOSED 500
+#define SOCKET_ERROR -100
+#define SERVER_ERROR -200
+#define SSL_ERROR -300
+#define ERROR_RECEIVING_DATA -400
+#define CONNECTION_CLOSED -500
 
 #ifdef DEVEL_MODE
 #define ADDRESS "127.0.0.1"

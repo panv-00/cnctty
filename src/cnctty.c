@@ -48,18 +48,6 @@ int connect_to_server(cnc_net *n)
   return net_connect_result;
 }
 
-void *receive_net_data(void *arg)
-{
-  ThreadData *data = (ThreadData *)arg;
-  cnc_net *net = data->net;
-  bool *thread_completed = data->thread_completed;
-
-  cnc_net_receive(net);
-
-  *thread_completed = true;
-  pthread_exit(NULL);
-}
-
 void disconnect_from_server(cnc_net *net, cnc_widget *infobar,
                             cnc_terminal *term, cnc_widget *display,
                             cnc_widget *prompt)
@@ -114,10 +102,6 @@ int main(void)
   cnc_terminal *term = NULL;
   cnc_net *net = NULL;
   cnc_buffer *message_buffer = NULL;
-
-  bool thread_completed = true;
-  ThreadData data;
-  pthread_t receiving_thread;
 
   cnc_buffer *username = cnc_buffer_init(MAX_NAME);
   cnc_buffer *password = cnc_buffer_init(MAX_NAME);
@@ -233,9 +217,19 @@ int main(void)
   cnc_buffer_append(display->data,
                     password->length > 0 ? "yes..\n" : "no...\n");
 
+  // select between user input and net receive
+  struct timeval tv;
+  fd_set read_fds;
+  int net_fd, input_fd, nfds;
+  int select_return_value;
+
+  bool redraw_terminal;
+
   // loop while app has not ended
   while (!end_app)
   {
+    redraw_terminal = false;
+
     // focus changed: refresh the infobar
     if (user_input == KEY_TAB)
     {
@@ -244,6 +238,7 @@ int main(void)
                               : display->has_focus ? "DISPLAY:"
                                                    : "        ",
                               0);
+      redraw_terminal = true;
     }
 
     // user wants to quit
@@ -254,6 +249,7 @@ int main(void)
       cnc_widget_reset(prompt);
       disconnect_from_server(net, infobar, term, display, prompt);
       end_app = true;
+      redraw_terminal = true;
     }
 
     // user wants to connect
@@ -266,7 +262,8 @@ int main(void)
         cnc_widget_reset(prompt);
         set_info(infobar, "connecting...", COLOR_WHITE_BG, prompt, display);
         cnc_terminal_update_and_redraw(term);
-        net_connect_result = connect_to_server(net);
+        // net_connect_result = connect_to_server(net);
+        net_connect_result = cnc_net_connect(net);
 
         if (net_connect_result == NO_NET_ERROR)
         {
@@ -291,17 +288,10 @@ int main(void)
                     connect_string->length + 1);
 
           cnc_buffer_destroy(connect_string);
-
-          // start receiving thread
-          thread_completed = false;
-          data.net = net;
-          data.thread_completed = &thread_completed;
-
-          pthread_create(&receiving_thread, NULL, receive_net_data,
-                         (void *)&data);
-          pthread_detach(receiving_thread);
         }
       }
+
+      redraw_terminal = true;
     }
 
     // user wants to disconnect from server
@@ -311,6 +301,7 @@ int main(void)
     {
       cnc_widget_reset(prompt);
       disconnect_from_server(net, infobar, term, display, prompt);
+      redraw_terminal = true;
     }
 
     // user wants to send message to the server
@@ -334,12 +325,14 @@ int main(void)
         }
 
         SSL_write(net->ssl, prompt->data->contents, prompt->data->length + 1);
+
         // prompt->foreground = COLOR_CYAN_FG;
         // cnc_terminal_focus_widget(term, prompt);
-        cnc_terminal_update_and_redraw(term);
+        // cnc_terminal_update_and_redraw(term);
       }
 
       cnc_widget_reset(prompt);
+      redraw_terminal = true;
     }
 
     // handle disconnect status
@@ -366,27 +359,75 @@ int main(void)
         cnc_buffer_append(display->data, "\n");
 
         display_disconnected_message = false;
+
+        redraw_terminal = true;
       }
 
       set_info(infobar, "offline", COLOR_RED_BG, prompt, display);
     }
 
-    cnc_terminal_update_and_redraw(term);
+    if (redraw_terminal)
+    {
+      cnc_terminal_update_and_redraw(term);
+      redraw_terminal = false;
+      user_input = 0;
+    }
 
     if (!end_app)
     {
-      user_input = cnc_terminal_get_user_input(term);
+      net_fd = SSL_get_rfd(net->ssl);
+      input_fd = fileno(stdin);
+      nfds = (net_fd > input_fd ? net_fd : input_fd) + 1;
+
+      FD_ZERO(&read_fds);
+      FD_SET(input_fd, &read_fds);
+      FD_SET(net_fd, &read_fds);
+
+      tv.tv_sec = 1;
+      tv.tv_usec = 0;
+
+      select_return_value = select(nfds, &read_fds, NULL, NULL, &tv);
+
+      if (select_return_value == -1)
+      {
+
+        free_all_allocations(term, net, username, password, message_buffer);
+
+        printf("Select error!\n");
+        exit(1);
+      }
+
+      else if (select_return_value == 0)
+      {
+        // timeout
+        redraw_terminal = false;
+      }
+
+      else
+      {
+        if (net->connected)
+        {
+          if (FD_ISSET(net_fd, &read_fds))
+          {
+            if (cnc_net_receive(net) < 0)
+            {
+              cnc_net_disconnect(net);
+            }
+          }
+        }
+
+        if (FD_ISSET(input_fd, &read_fds))
+        {
+          user_input = cnc_terminal_get_user_input(term);
+        }
+      }
+
+      usleep(100000); // Sleep for 100 milliseconds
     }
   }
 
   // eventually, ensure disconnection from server before exit
   disconnect_from_server(net, infobar, term, display, prompt);
-
-  // Wait for receiving thread to finish before exiting
-  while (!thread_completed)
-  {
-    sleep(1);
-  }
 
   free_all_allocations(term, net, username, password, message_buffer);
 
