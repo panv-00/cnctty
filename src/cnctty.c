@@ -28,26 +28,6 @@ void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
   i->background = bg;
 }
 
-int connect_to_server(cnc_net *n)
-{
-  int retry_connect = 0;
-  int max_retry_connect = 3;
-  int net_connect_result = 0;
-
-  while (!n->connected && retry_connect < max_retry_connect)
-  {
-    retry_connect++;
-    net_connect_result = cnc_net_connect(n);
-
-    if (net_connect_result != NO_NET_ERROR)
-    {
-      sleep(1);
-    }
-  }
-
-  return net_connect_result;
-}
-
 void disconnect_from_server(cnc_net *net, cnc_widget *infobar,
                             cnc_terminal *term, cnc_widget *display,
                             cnc_widget *prompt)
@@ -262,7 +242,6 @@ int main(void)
         cnc_widget_reset(prompt);
         set_info(infobar, "connecting...", COLOR_WHITE_BG, prompt, display);
         cnc_terminal_update_and_redraw(term);
-        // net_connect_result = connect_to_server(net);
         net_connect_result = cnc_net_connect(net);
 
         if (net_connect_result == NO_NET_ERROR)
