@@ -365,14 +365,18 @@ int main(void)
       tv.tv_sec = 1;
       tv.tv_usec = 0;
 
-      select_return_value = select(nfds, &read_fds, NULL, NULL, &tv);
+      // handle select error due to interrupted system call
+      do
+      {
+        select_return_value = select(nfds, &read_fds, NULL, NULL, &tv);
+      } while (select_return_value == -1 && errno == EINTR);
 
       if (select_return_value == -1)
       {
-
         free_all_allocations(term, net, username, password, message_buffer);
 
         printf("Select error!\n");
+        perror("select()");
         exit(1);
       }
 
