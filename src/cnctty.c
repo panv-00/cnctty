@@ -405,8 +405,6 @@ int main(void)
           user_input = cnc_terminal_get_user_input(term);
         }
       }
-
-      usleep(100000); // Sleep for 100 milliseconds
     }
   }
 
