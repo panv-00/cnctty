@@ -1,5 +1,4 @@
 #include "cnctty.h"
-#include "cnc_library/cnc_library.h"
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
               cnc_widget *d)
