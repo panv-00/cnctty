@@ -1,4 +1,5 @@
 #include "cnctty.h"
+#include "cnc_library/cnc_library.h"
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
               cnc_widget *d)
@@ -117,7 +118,8 @@ int main(void)
   }
 
   // initial screen setup
-  cnc_buffer_set_text(display->data, "Welcome to cnctty v 1.02");
+  cnc_buffer_set_text(display->data, "Welcome to cnctty ");
+  cnc_buffer_append(display->data, APP_VERSION);
 
 #ifdef DEVEL_MODE
   cnc_buffer_append(display->data, " (development mode)");
