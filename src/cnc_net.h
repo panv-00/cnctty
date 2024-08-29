@@ -12,14 +12,6 @@
 // uncomment below if run in development mode
 // #define DEVEL_MODE 1
 
-// network errors
-#define NO_NET_ERROR 0
-#define SOCKET_ERROR -100
-#define SERVER_ERROR -200
-#define SSL_ERROR -300
-#define ERROR_RECEIVING_DATA -400
-#define CONNECTION_CLOSED -500
-
 #ifdef DEVEL_MODE
 #define ADDRESS "127.0.0.1"
 #else
@@ -37,8 +29,6 @@ typedef struct
   SSL_CTX *ctx;
   SSL *ssl;
 
-  bool stop_receiving;
-
   cnc_buffer *databuffer;
 
   // pointers to variables in other modules
@@ -52,6 +42,7 @@ typedef struct
 cnc_net *cnc_net_init();
 int cnc_net_connect(cnc_net *n);
 int cnc_net_receive(cnc_net *n);
+int cnc_net_send(cnc_net *n, const char *data);
 void cnc_net_disconnect(cnc_net *n);
 void cnc_net_destroy(cnc_net *n);
 

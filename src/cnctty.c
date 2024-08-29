@@ -1,4 +1,5 @@
 #include "cnctty.h"
+#include "cnc_net.h"
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
               cnc_widget *d)
@@ -245,7 +246,7 @@ int main(void)
         cnc_terminal_update_and_redraw(term);
         net_connect_result = cnc_net_connect(net);
 
-        if (net_connect_result == NO_NET_ERROR)
+        if (net_connect_result == 0)
         {
           display_disconnected_message = true;
           set_info(infobar, "online", COLOR_GREEN_BG, prompt, display);
@@ -264,8 +265,11 @@ int main(void)
             cnc_buffer_append(connect_string, password->contents);
           }
 
-          SSL_write(net->ssl, connect_string->contents,
-                    connect_string->length + 1);
+          if (cnc_net_send(net, connect_string->contents) == -1)
+          {
+            cnc_net_disconnect(net);
+            display_disconnected_message = true;
+          }
 
           cnc_buffer_destroy(connect_string);
         }
@@ -304,7 +308,11 @@ int main(void)
           cnc_buffer_trim(username);
         }
 
-        SSL_write(net->ssl, prompt->data->contents, prompt->data->length + 1);
+        if (cnc_net_send(net, prompt->data->contents) == -1)
+        {
+          cnc_net_disconnect(net);
+          display_disconnected_message = true;
+        }
 
         // prompt->foreground = COLOR_CYAN_FG;
         // cnc_terminal_focus_widget(term, prompt);
@@ -396,6 +404,7 @@ int main(void)
             if (cnc_net_receive(net) < 0)
             {
               cnc_net_disconnect(net);
+              display_disconnected_message = true;
             }
           }
         }

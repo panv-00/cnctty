@@ -1,4 +1,5 @@
 #include "cnc_net.h"
+#include <openssl/ssl.h>
 
 cnc_net *cnc_net_init()
 {
@@ -13,7 +14,6 @@ cnc_net *cnc_net_init()
   n->sockfd = -1;
   n->ctx = NULL;
   n->ssl = NULL;
-  n->stop_receiving = false;
 
   n->databuffer = NULL;
 
@@ -34,7 +34,7 @@ int cnc_net_connect(cnc_net *n)
 
   if (n->ctx == NULL)
   {
-    return SSL_ERROR;
+    return -1;
   }
 
   n->sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -44,7 +44,7 @@ int cnc_net_connect(cnc_net *n)
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return SOCKET_ERROR;
+    return -1;
   }
 
   memset(&n->serv_addr, 0, sizeof(n->serv_addr));
@@ -57,7 +57,7 @@ int cnc_net_connect(cnc_net *n)
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return SERVER_ERROR;
+    return -1;
   }
 
   if (connect(n->sockfd, (struct sockaddr *)&n->serv_addr,
@@ -67,7 +67,7 @@ int cnc_net_connect(cnc_net *n)
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return SERVER_ERROR;
+    return -1;
   }
 
   n->ssl = SSL_new(n->ctx);
@@ -78,7 +78,7 @@ int cnc_net_connect(cnc_net *n)
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return SSL_ERROR;
+    return -1;
   }
 
   SSL_set_fd(n->ssl, n->sockfd);
@@ -90,13 +90,12 @@ int cnc_net_connect(cnc_net *n)
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return SSL_ERROR;
+    return -1;
   }
 
   n->connected = true;
-  n->stop_receiving = false;
 
-  return NO_NET_ERROR;
+  return 0;
 }
 
 int cnc_net_receive(cnc_net *n)
@@ -105,19 +104,13 @@ int cnc_net_receive(cnc_net *n)
 
   int bytes_received = SSL_read(n->ssl, buffer, sizeof(buffer));
 
-  if (bytes_received < 0)
+  if (bytes_received <= 0)
   {
+    n->connected = false;
     cnc_net_disconnect(n);
 
-    return ERROR_RECEIVING_DATA;
+    return -1;
   }
-
-  // if (bytes_received == 0)
-  // {
-  //   cnc_net_disconnect(n);
-  //
-  //   return CONNECTION_CLOSED;
-  // }
 
   add_buffer_to_messages(buffer, bytes_received, n->message_buffer,
                          n->username->contents, n->databuffer, n->terminal,
@@ -126,16 +119,33 @@ int cnc_net_receive(cnc_net *n)
   return bytes_received;
 }
 
+int cnc_net_send(cnc_net *n, const char *data)
+{
+  int bytes_sent = SSL_write(n->ssl, data, calen(data) + 1);
+
+  if (bytes_sent <= 0)
+  {
+    n->connected = false;
+    cnc_net_disconnect(n);
+
+    return -1;
+  }
+
+  return bytes_sent;
+}
+
 void cnc_net_disconnect(cnc_net *n)
 {
-  if (n == NULL || !n->connected)
+  if (n == NULL)
   {
     return;
   }
 
-  SSL_write(n->ssl, ".q", 3);
+  if (n->connected)
+  {
+    SSL_write(n->ssl, ".q", 3);
+  }
 
-  n->stop_receiving = true;
   sleep(1);
 
   // Shutdown SSL connection

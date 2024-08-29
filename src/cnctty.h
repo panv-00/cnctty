@@ -5,7 +5,7 @@
 #include "cnc_message.h"
 #include "cnc_net.h"
 
-#define APP_VERSION "0.1.33"
+#define APP_VERSION "0.1.34"
 
 #define TERM_MIN_WIDTH 68
 #define TERM_MIN_HEIGHT 15
