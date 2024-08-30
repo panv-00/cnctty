@@ -1,5 +1,4 @@
 #include "cnc_net.h"
-#include <openssl/ssl.h>
 
 cnc_net *cnc_net_init()
 {
@@ -21,6 +20,9 @@ cnc_net *cnc_net_init()
   n->message_buffer = NULL;
   n->terminal = NULL;
   n->infobar = NULL;
+
+  // ignore SIGPIPE
+  signal(SIGPIPE, SIG_IGN);
 
   return n;
 }
