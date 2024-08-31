@@ -392,8 +392,10 @@ int main(void)
 
       else if (select_return_value == 0)
       {
-        // timeout
+        // check for terminal resize
         cnc_terminal_check_for_resize(term);
+
+        // do not redraw
         redraw_terminal = false;
       }
 
@@ -405,7 +407,7 @@ int main(void)
           {
             if (cnc_net_receive(net) < 0)
             {
-              cnc_net_disconnect(net);
+              // cnc_net_disconnect(net);
               display_disconnected_message = true;
             }
           }

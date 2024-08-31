@@ -143,7 +143,7 @@ void cnc_net_disconnect(cnc_net *n)
     return;
   }
 
-  if (n->connected)
+  // if (n->connected)
   {
     SSL_write(n->ssl, ".q", 3);
   }
