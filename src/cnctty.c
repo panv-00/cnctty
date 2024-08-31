@@ -1,4 +1,5 @@
 #include "cnctty.h"
+#include "cnc_library/cnc_library.h"
 #include "cnc_net.h"
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
@@ -392,6 +393,7 @@ int main(void)
       else if (select_return_value == 0)
       {
         // timeout
+        cnc_terminal_check_for_resize(term);
         redraw_terminal = false;
       }
 
