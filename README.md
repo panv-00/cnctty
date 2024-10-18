@@ -58,14 +58,17 @@ $ ./cnctty
 | **CMD**    | <kbd>i</kbd>                   | any     | Switch to **INSERT** mode     |
 | **CMD**    | <kbd>a</kbd>                   | PROMPT  | Append in **INSERT** mode     |
 | **CMD**    | <kbd>A</kbd>                   | PROMPT  | Append end in **INSERT** mode |
-| **CMD**    | <kbd>h</kbd>                   | PROMPT  | Move cursor left          |
-| **CMD**    | <kbd>l</kbd>                   | PROMPT  | Move cursor right         |
 | **CMD**    | <kbd>0</kbd>                   | PROMPT  | Move cursor to beginning  |
 | **CMD**    | <kbd>$</kbd>                   | PROMPT  | Move cursor to end        |
-| **CMD**    | <kbd>j</kbd>                   | DISPLAY | Scroll down               |
 | **CMD**    | <kbd>k</kbd>                   | DISPLAY | Scroll up                 |
+| **CMD**    | <kbd>j</kbd>                   | DISPLAY | Scroll down               |
+| **CMD**    | <kbd>l</kbd>                   | PROMPT  | Move cursor right         |
+| **CMD**    | <kbd>h</kbd>                   | PROMPT  | Move cursor left          |
+| **CMD**    | <kbd>e</kbd>                   | PROMPT  | Move word right           |
+| **CMD**    | <kbd>b</kbd>                   | PROMPT  | Move word left            |
 | **CMD**    | <kbd>0</kbd>                   | DISPLAY | Scroll to first           |
 | **CMD**    | <kbd>$</kbd>                   | DISPLAY | Scroll to last            |
+| **CMD**    | <kbd>x</kbd>                   | PROMPT  | Delete under cursor       |
 | **CMD**    | <kbd>PAGE UP</kbd>             | DISPLAY | Scroll one page up        |
 | **CMD**    | <kbd>PAGE DOWN</kbd>           | DISPLAY | Scroll one page down      |
 
