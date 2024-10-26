@@ -143,11 +143,7 @@ void cnc_net_disconnect(cnc_net *n)
     return;
   }
 
-  // if (n->connected)
-  {
-    SSL_write(n->ssl, ".q", 3);
-  }
-
+  SSL_write(n->ssl, ".q", 3);
   sleep(1);
 
   // Shutdown SSL connection

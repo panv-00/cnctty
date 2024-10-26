@@ -294,11 +294,6 @@ int main(void)
     {
       if (net->connected)
       {
-        // prompt->foreground = COLOR_WHITE_FG;
-        // cnc_terminal_focus_widget(term, display);
-        // cnc_terminal_update_and_redraw(term);
-        // sleep(1);
-
         // changing username??
         if (prompt->data->contents[0] == '.' &&
             prompt->data->contents[1] == 'n')
@@ -314,10 +309,6 @@ int main(void)
           cnc_net_disconnect(net);
           display_disconnected_message = true;
         }
-
-        // prompt->foreground = COLOR_CYAN_FG;
-        // cnc_terminal_focus_widget(term, prompt);
-        // cnc_terminal_update_and_redraw(term);
       }
 
       cnc_widget_reset(prompt);
@@ -407,7 +398,6 @@ int main(void)
           {
             if (cnc_net_receive(net) < 0)
             {
-              // cnc_net_disconnect(net);
               display_disconnected_message = true;
             }
           }
