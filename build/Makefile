@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall -O3 -g -lssl -lcrypto -pthread
+CFLAGS=-Wall -O3 -g -lssl -lcrypto
 VPATH=../src:../src/cnc_library
 
 OBJECTS= \

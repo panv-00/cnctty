@@ -216,11 +216,11 @@ int main(void)
     // focus changed: refresh the infobar
     if (user_input == KEY_TAB)
     {
-      cnc_buffer_replace_text(infobar->data, 14, 10,
-                              prompt->has_focus    ? "PROMPT :"
-                              : display->has_focus ? "DISPLAY:"
-                                                   : "        ",
-                              0);
+      set_info(infobar, net->connected ? "online" : "offline",
+               display->has_focus
+                   ? COLOR_YELLOW_BG
+                   : (net->connected ? COLOR_GREEN_BG : COLOR_RED_BG),
+               prompt, display);
       redraw_terminal = true;
     }
 
@@ -343,7 +343,9 @@ int main(void)
         redraw_terminal = true;
       }
 
-      set_info(infobar, "offline", COLOR_RED_BG, prompt, display);
+      set_info(infobar, "offline",
+               display->has_focus ? COLOR_YELLOW_BG : COLOR_RED_BG, prompt,
+               display);
     }
 
     if (redraw_terminal)
