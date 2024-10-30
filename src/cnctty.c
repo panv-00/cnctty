@@ -74,8 +74,39 @@ void free_all_allocations(cnc_terminal *term, cnc_net *net,
   }
 }
 
-int main(void)
+void usage(void)
 {
+  printf("Usage:\n");
+  printf("$ cnctty --version: display version and exit.\n");
+  printf("$ cnctty          : run the chat client.\n");
+
+  exit(1);
+}
+
+int main(int argc, char *argv[])
+{
+  if (argc > 1)
+  {
+    if (argc == 2)
+    {
+      cnc_buffer *argument = cnc_buffer_init(1024);
+      cnc_buffer_set_text(argument, argv[1]);
+
+      if (cnc_buffer_equal_string(argument, "--version"))
+      {
+        printf("version: %s\n", APP_VERSION);
+        cnc_buffer_destroy(argument);
+
+        exit(0);
+      }
+
+      cnc_buffer_destroy(argument);
+      usage();
+    }
+
+    usage();
+  }
+
   int user_input = 0;
   bool end_app = false;
   bool display_disconnected_message = true;

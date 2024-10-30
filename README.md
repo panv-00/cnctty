@@ -42,6 +42,10 @@ make[1]: Leaving directory './cnctty/build'
 # now you can run with:
 $ ./cnctty
 
+# or
+$ ./cnctty --version
+# display version number and exit
+
 # copy this executable anywhere you like (i.e. ~/.bin or ~/.local/bin)
 ```
 
