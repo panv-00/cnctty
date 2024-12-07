@@ -97,11 +97,11 @@ void message_parse(const char *message_string, size_t length,
     // private message received
     cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
     cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_MAGENTA_BG);
+                           COLOR_CODE_DEFAULT);
 
     cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
     cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_BLACK_FG);
+                           COLOR_CODE_YELLOW_FG);
 
     // insert timestamp
     cnc_buffer_append(databuffer, timestamp);

@@ -18,7 +18,7 @@
 #define ADDRESS "76.235.94.33"
 #endif
 
-#define PORT 6667
+#define PORT    6667
 #define BUFSIZE 2048
 
 typedef struct
