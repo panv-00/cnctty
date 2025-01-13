@@ -1,6 +1,4 @@
 #include "cnctty.h"
-#include "cnc_library/cnc_library.h"
-#include "cnc_net.h"
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,
               cnc_widget *d)
@@ -107,13 +105,13 @@ int main(int argc, char *argv[])
     usage();
   }
 
-  int user_input = 0;
-  bool end_app = false;
+  int user_input                    = 0;
+  bool end_app                      = false;
   bool display_disconnected_message = true;
-  int net_connect_result = 0;
+  int net_connect_result            = 0;
 
-  cnc_terminal *term = NULL;
-  cnc_net *net = NULL;
+  cnc_terminal *term         = NULL;
+  cnc_net *net               = NULL;
   cnc_buffer *message_buffer = NULL;
 
   cnc_buffer *username = cnc_buffer_init(MAX_NAME);
@@ -131,7 +129,7 @@ int main(int argc, char *argv[])
 
   cnc_widget *display = cnc_terminal_add_widget(term, WIDGET_DISPLAY);
   cnc_widget *infobar = cnc_terminal_add_widget(term, WIDGET_INFO);
-  cnc_widget *prompt = cnc_terminal_add_widget(term, WIDGET_PROMPT);
+  cnc_widget *prompt  = cnc_terminal_add_widget(term, WIDGET_PROMPT);
 
   if (!display || !infobar || !prompt)
   {
@@ -182,11 +180,11 @@ int main(int argc, char *argv[])
     exit(1);
   }
 
-  net->databuffer = display->data;
+  net->databuffer     = display->data;
   net->message_buffer = message_buffer;
-  net->terminal = term;
-  net->infobar = infobar;
-  net->username = username;
+  net->terminal       = term;
+  net->infobar        = infobar;
+  net->username       = username;
 
   // user interface begins here
   // initially get the username
@@ -257,19 +255,23 @@ int main(int argc, char *argv[])
 
     // user wants to quit
     else if ((term->mode == MODE_INS && user_input == KEY_ENTER &&
-              cnc_buffer_equal_string(prompt->data, ":q")) ||
-             (term->mode == MODE_CMD && user_input == 'q'))
+              (cnc_buffer_equal_string(prompt->data, ":q") ||
+               cnc_buffer_equal_string(prompt->data, ":Q"))) ||
+             (term->mode == MODE_CMD &&
+              (user_input == 'q' || user_input == 'Q')))
     {
       cnc_widget_reset(prompt);
       disconnect_from_server(net, infobar, term, display, prompt);
-      end_app = true;
+      end_app         = true;
       redraw_terminal = true;
     }
 
     // user wants to connect
     else if ((term->mode == MODE_INS && user_input == KEY_ENTER &&
-              cnc_buffer_equal_string(prompt->data, ":c")) ||
-             (term->mode == MODE_CMD && user_input == 'c'))
+              (cnc_buffer_equal_string(prompt->data, ":c") ||
+               cnc_buffer_equal_string(prompt->data, ":C"))) ||
+             (term->mode == MODE_CMD &&
+              (user_input == 'c' || user_input == 'C')))
     {
       if (!net->connected)
       {
@@ -312,8 +314,10 @@ int main(int argc, char *argv[])
 
     // user wants to disconnect from server
     else if ((term->mode == MODE_INS && user_input == KEY_ENTER &&
-              cnc_buffer_equal_string(prompt->data, ":d")) ||
-             (term->mode == MODE_CMD && user_input == 'd'))
+              (cnc_buffer_equal_string(prompt->data, ":d") ||
+               cnc_buffer_equal_string(prompt->data, ":D"))) ||
+             (term->mode == MODE_CMD &&
+              (user_input == 'd' || user_input == 'd')))
     {
       cnc_widget_reset(prompt);
       disconnect_from_server(net, infobar, term, display, prompt);
@@ -383,20 +387,20 @@ int main(int argc, char *argv[])
     {
       cnc_terminal_update_and_redraw(term);
       redraw_terminal = false;
-      user_input = 0;
+      user_input      = 0;
     }
 
     if (!end_app)
     {
-      net_fd = SSL_get_rfd(net->ssl);
+      net_fd   = SSL_get_rfd(net->ssl);
       input_fd = fileno(stdin);
-      nfds = (net_fd > input_fd ? net_fd : input_fd) + 1;
+      nfds     = (net_fd > input_fd ? net_fd : input_fd) + 1;
 
       FD_ZERO(&read_fds);
       FD_SET(input_fd, &read_fds);
       FD_SET(net_fd, &read_fds);
 
-      tv.tv_sec = 1;
+      tv.tv_sec  = 1;
       tv.tv_usec = 0;
 
       // handle select error due to interrupted system call

@@ -2,7 +2,7 @@
 #define CNC_MESSAGE_H
 
 #define MAX_MESSAGE_BODY 542
-#define MAX_NAME 17
+#define MAX_NAME         17
 
 #include <stddef.h>
 #include <time.h>

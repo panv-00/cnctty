@@ -10,16 +10,16 @@ cnc_net *cnc_net_init()
   }
 
   n->connected = false;
-  n->sockfd = -1;
-  n->ctx = NULL;
-  n->ssl = NULL;
+  n->sockfd    = -1;
+  n->ctx       = NULL;
+  n->ssl       = NULL;
 
   n->databuffer = NULL;
 
-  n->username = NULL;
+  n->username       = NULL;
   n->message_buffer = NULL;
-  n->terminal = NULL;
-  n->infobar = NULL;
+  n->terminal       = NULL;
+  n->infobar        = NULL;
 
   // ignore SIGPIPE
   signal(SIGPIPE, SIG_IGN);
@@ -51,7 +51,7 @@ int cnc_net_connect(cnc_net *n)
 
   memset(&n->serv_addr, 0, sizeof(n->serv_addr));
   n->serv_addr.sin_family = AF_INET;
-  n->serv_addr.sin_port = htons(PORT);
+  n->serv_addr.sin_port   = htons(PORT);
 
   if (inet_pton(AF_INET, ADDRESS, &n->serv_addr.sin_addr) <= 0)
   {

@@ -52,39 +52,45 @@ $ ./cnctty --version
 ## Basic Usage
 
 **key shortcuts**
-| Mode   | key                            | Widget  | Action                    |
-| ------ | ------------------------------ | ------- | ------------------------- |
+| Mode       | key                            | Widget  | Action                        |
+| ---------- | ------------------------------ | ------- | ----------------------------- |
 | **INSERT** | <kbd>ESC</kbd>                 | any     | Switch to **CMD** mode        |
 | **INSERT** | <kbd>Ctrl</kbd> + <kbd>c</kbd> | any     | Switch to **CMD** mode        |
-| **INSERT** | <kbd>LEFT</kbd>                | PROMPT  | Move cursor left          |
-| **INSERT** | <kbd>RIGHT</kbd>               | PROMPT  | Move cursor right         |
+| **INSERT** | <kbd>LEFT</kbd>                | PROMPT  | Move cursor left              |
+| **INSERT** | <kbd>RIGHT</kbd>               | PROMPT  | Move cursor right             |
 | **CMD**    | <kbd>INS</kbd>                 | any     | Switch to **INSERT** mode     |
 | **CMD**    | <kbd>i</kbd>                   | any     | Switch to **INSERT** mode     |
 | **CMD**    | <kbd>a</kbd>                   | PROMPT  | Append in **INSERT** mode     |
 | **CMD**    | <kbd>A</kbd>                   | PROMPT  | Append end in **INSERT** mode |
-| **CMD**    | <kbd>0</kbd>                   | PROMPT  | Move cursor to beginning  |
-| **CMD**    | <kbd>$</kbd>                   | PROMPT  | Move cursor to end        |
-| **CMD**    | <kbd>k</kbd>                   | DISPLAY | Scroll up                 |
-| **CMD**    | <kbd>j</kbd>                   | DISPLAY | Scroll down               |
-| **CMD**    | <kbd>l</kbd>                   | PROMPT  | Move cursor right         |
-| **CMD**    | <kbd>h</kbd>                   | PROMPT  | Move cursor left          |
-| **CMD**    | <kbd>e</kbd>                   | PROMPT  | Move word right           |
-| **CMD**    | <kbd>b</kbd>                   | PROMPT  | Move word left            |
-| **CMD**    | <kbd>0</kbd>                   | DISPLAY | Scroll to first           |
-| **CMD**    | <kbd>$</kbd>                   | DISPLAY | Scroll to last            |
-| **CMD**    | <kbd>x</kbd>                   | PROMPT  | Delete under cursor       |
-| **CMD**    | <kbd>PAGE UP</kbd>             | DISPLAY | Scroll one page up        |
-| **CMD**    | <kbd>PAGE DOWN</kbd>           | DISPLAY | Scroll one page down      |
+| **CMD**    | <kbd>0</kbd>                   | PROMPT  | Move cursor to beginning      |
+| **CMD**    | <kbd>$</kbd>                   | PROMPT  | Move cursor to end            |
+| **CMD**    | <kbd>k</kbd>                   | DISPLAY | Scroll up                     |
+| **CMD**    | <kbd>j</kbd>                   | DISPLAY | Scroll down                   |
+| **CMD**    | <kbd>l</kbd>                   | PROMPT  | Move cursor right             |
+| **CMD**    | <kbd>h</kbd>                   | PROMPT  | Move cursor left              |
+| **CMD**    | <kbd>e</kbd>                   | PROMPT  | Move word right               |
+| **CMD**    | <kbd>b</kbd>                   | PROMPT  | Move word left                |
+| **CMD**    | <kbd>0</kbd>                   | DISPLAY | Scroll to first               |
+| **CMD**    | <kbd>$</kbd>                   | DISPLAY | Scroll to last                |
+| **CMD**    | <kbd>x</kbd>                   | PROMPT  | Delete under cursor           |
+| **CMD**    | <kbd>PAGE UP</kbd>             | DISPLAY | Scroll one page up            |
+| **CMD**    | <kbd>PAGE DOWN</kbd>           | DISPLAY | Scroll one page down          |
 
 **PROMPT commands**
-| Mode   | Command      | Action            |
-| ------ | ------------ | ----------------- |
-| **INSERT** | `:q `          | quit              |
-| **INSERT** | `:c `          | connect to server |
-| **INSERT** | `:d `          | disconnect        |
-| **CMD**    | <kbd>q</kbd> | quit              |
-| **CMD**    | <kbd>c</kbd> | connect to server |
-| **CMD**    | <kbd>d</kbd> | disconnect        |
+| Mode       | Command        | Action                |
+| ---------- | -------------- | --------------------- |
+| **INSERT** | `:q `          | quit                  |
+| **INSERT** | `:Q `          | quit                  |
+| **INSERT** | `:c `          | connect to server     |
+| **INSERT** | `:C `          | connect to server     |
+| **INSERT** | `:d `          | disconnect            |
+| **INSERT** | `:D `          | disconnect            |
+| **CMD**    | <kbd>q</kbd>   | quit                  |
+| **CMD**    | <kbd>Q</kbd>   | quit                  |
+| **CMD**    | <kbd>c</kbd>   | connect to server     |
+| **CMD**    | <kbd>C</kbd>   | connect to server     |
+| **CMD**    | <kbd>d</kbd>   | disconnect            |
+| **CMD**    | <kbd>D</kbd>   | disconnect            |
 
 ## License
 
