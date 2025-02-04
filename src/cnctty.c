@@ -398,7 +398,11 @@ int main(int argc, char *argv[])
 
       FD_ZERO(&read_fds);
       FD_SET(input_fd, &read_fds);
-      FD_SET(net_fd, &read_fds);
+
+      if (net_fd > 0)
+      {
+        FD_SET(net_fd, &read_fds);
+      }
 
       tv.tv_sec  = 1;
       tv.tv_usec = 0;
