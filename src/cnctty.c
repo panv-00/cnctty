@@ -422,15 +422,6 @@ int main(int argc, char *argv[])
         exit(1);
       }
 
-      else if (select_return_value == 0)
-      {
-        // check for terminal resize
-        cnc_terminal_check_for_resize(term);
-
-        // do not redraw
-        redraw_terminal = false;
-      }
-
       else
       {
         if (net->connected)
