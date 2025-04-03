@@ -299,7 +299,7 @@ int main(int argc, char *argv[])
             cnc_buffer_append(connect_string, password->contents);
           }
 
-          if (cnc_net_send(net, connect_string->contents) == -1)
+          if (cnc_net_send(net, connect_string->contents) <= 0)
           {
             cnc_net_disconnect(net);
             display_disconnected_message = true;
@@ -339,7 +339,7 @@ int main(int argc, char *argv[])
           cnc_buffer_trim(username);
         }
 
-        if (cnc_net_send(net, prompt->data->contents) == -1)
+        if (cnc_net_send(net, prompt->data->contents) <= 0)
         {
           cnc_net_disconnect(net);
           display_disconnected_message = true;
@@ -439,6 +439,7 @@ int main(int argc, char *argv[])
           {
             if (cnc_net_receive(net) < 0)
             {
+              cnc_net_disconnect(net);
               display_disconnected_message = true;
             }
           }

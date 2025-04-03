@@ -5,9 +5,9 @@
 #include "cnc_message.h"
 #include "cnc_net.h"
 
-#define APP_VERSION "0.1.45"
+#define APP_VERSION "0.1.46"
 
-#define TERM_MIN_WIDTH  68
+#define TERM_MIN_WIDTH  67
 #define TERM_MIN_HEIGHT 15
 
 void set_info(cnc_widget *i, const char *text, char *bg, cnc_widget *p,

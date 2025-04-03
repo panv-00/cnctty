@@ -1,5 +1,6 @@
 CC=gcc
-CFLAGS=-Wall -O3 -g -lssl -lcrypto
+CFLAGS=-Wall -O3 -g
+LFLAGS=-lssl -lcrypto
 VPATH=../src:../src/cnc_library
 
 OBJECTS= \
@@ -10,9 +11,10 @@ OBJECTS= \
 default: $(OBJECTS)
 	$(CC) -o ../cnctty ../src/cnctty.c \
 		$(OBJECTS) \
-		$(CFLAGS)
+		$(CFLAGS) \
+		$(LFLAGS)
 	
-%.o: ../src/%.c ../scr/%.h
+%.o: ../src/%.c ../src/%.h
 	$(CC) -c $< -o $*.o
 
 cnc_library.o: cnc_library/cnc_library.c cnc_library/cnc_library.h
