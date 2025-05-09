@@ -22,7 +22,7 @@ void add_buffer_to_messages(const char *buffer, size_t bytes_received,
       cnc_buffer_insert_char(message_buffer, message_buffer->length, 1, '\0');
       message_parse(message_buffer->contents, message_buffer->length, username,
                     databuffer, term, infobar);
-      cnc_terminal_update_and_redraw(term);
+      cnc_terminal_update(term);
       cnc_buffer_clear(message_buffer);
     }
 

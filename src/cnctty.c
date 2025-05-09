@@ -35,7 +35,7 @@ void disconnect_from_server(cnc_net *net, cnc_widget *infobar,
   if (net->connected)
   {
     set_info(infobar, "disconnecting...", COLOR_WHITE_BG, prompt, display);
-    cnc_terminal_update_and_redraw(term);
+    cnc_terminal_update(term);
 
     cnc_net_disconnect(net);
     set_info(infobar, "offline", COLOR_RED_BG, prompt, display);
@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
   // user interface begins here
   // initially get the username
   cnc_buffer_append(display->data, "\n    Pick a username: _");
-  cnc_terminal_update_and_redraw(term);
+  cnc_terminal_update(term);
 
   while (true)
   {
@@ -207,7 +207,7 @@ int main(int argc, char *argv[])
   cnc_buffer_delete_char(display->data, display->data->length - 1);
   cnc_buffer_append(display->data, username->contents);
   cnc_buffer_append(display->data, "\n    Password ? _");
-  cnc_terminal_update_and_redraw(term);
+  cnc_terminal_update(term);
 
   while (true)
   {
@@ -277,7 +277,7 @@ int main(int argc, char *argv[])
       {
         cnc_widget_reset(prompt);
         set_info(infobar, "connecting...", COLOR_WHITE_BG, prompt, display);
-        cnc_terminal_update_and_redraw(term);
+        cnc_terminal_update(term);
         net_connect_result = cnc_net_connect(net);
 
         if (net_connect_result == 0)
@@ -385,7 +385,7 @@ int main(int argc, char *argv[])
 
     if (redraw_terminal)
     {
-      cnc_terminal_update_and_redraw(term);
+      cnc_terminal_update(term);
       redraw_terminal = false;
       user_input      = 0;
     }
