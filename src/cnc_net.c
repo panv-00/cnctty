@@ -1,10 +1,10 @@
 #include "cnc_net.h"
 
-cnc_net *cnc_net_init()
+cnc_net *cn_init()
 {
-  cnc_net *n = (cnc_net *)malloc(sizeof(cnc_net));
+  cnc_net *n = malloc(sizeof(cnc_net));
 
-  if (!n)
+  if (n == NULL)
   {
     return NULL;
   }
@@ -14,12 +14,7 @@ cnc_net *cnc_net_init()
   n->ctx       = NULL;
   n->ssl       = NULL;
 
-  n->databuffer = NULL;
-
-  n->username       = NULL;
-  n->message_buffer = NULL;
-  n->terminal       = NULL;
-  n->infobar        = NULL;
+  n->app = NULL;
 
   // ignore SIGPIPE
   signal(SIGPIPE, SIG_IGN);
@@ -27,108 +22,177 @@ cnc_net *cnc_net_init()
   return n;
 }
 
-int cnc_net_connect(cnc_net *n)
+bool cn_connect(cnc_net *n)
 {
-  SSL_library_init();
-  SSL_load_error_strings();
+  if (n == NULL)
+  {
+    return false;
+  }
 
-  n->ctx = SSL_CTX_new(SSLv23_client_method());
+  if (n->connected)
+  {
+    return true;
+  }
+
+  // unsigned long err = ERR_get_error();
+  // fprintf(stderr, "SSL error: %s\n", ERR_error_string(err, NULL));
+
+  // SSL_library_init();
+  // SSL_load_error_strings();
+
+  const SSL_METHOD *method = TLS_client_method();
+  n->ctx                   = SSL_CTX_new(method);
+
+  // n->ctx = SSL_CTX_new(SSLv23_client_method());
 
   if (n->ctx == NULL)
   {
-    return -1;
+    n->connected = false;
+
+    return false;
   }
 
   n->sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
   if (n->sockfd < 0)
   {
+    n->connected = false;
+
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return -1;
+    return false;
   }
 
   memset(&n->serv_addr, 0, sizeof(n->serv_addr));
+
   n->serv_addr.sin_family = AF_INET;
   n->serv_addr.sin_port   = htons(PORT);
 
   if (inet_pton(AF_INET, ADDRESS, &n->serv_addr.sin_addr) <= 0)
   {
+    n->connected = false;
+
     close(n->sockfd);
+    n->sockfd = -1;
+
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return -1;
+    return false;
   }
 
   if (connect(n->sockfd, (struct sockaddr *)&n->serv_addr,
               sizeof(n->serv_addr)) < 0)
   {
+    n->connected = false;
+
     close(n->sockfd);
+    n->sockfd = -1;
+
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return -1;
+    return false;
   }
 
   n->ssl = SSL_new(n->ctx);
 
   if (n->ssl == NULL)
   {
+    n->connected = false;
+
     close(n->sockfd);
+    n->sockfd = -1;
+
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return -1;
+    return false;
   }
 
-  SSL_set_fd(n->ssl, n->sockfd);
+  if (SSL_set_fd(n->ssl, n->sockfd) != 1)
+  {
+    n->connected = false;
+
+    close(n->sockfd);
+    n->sockfd = -1;
+
+    SSL_free(n->ssl);
+    n->ssl = NULL;
+
+    SSL_CTX_free(n->ctx);
+    n->ctx = NULL;
+
+    return false;
+  }
 
   if (SSL_connect(n->ssl) != 1)
   {
-    SSL_free(n->ssl);
+    n->connected = false;
+
     close(n->sockfd);
+    n->sockfd = -1;
+
+    SSL_free(n->ssl);
+    n->ssl = NULL;
+
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
 
-    return -1;
+    return false;
   }
 
   n->connected = true;
 
-  return 0;
+  return true;
 }
 
-int cnc_net_receive(cnc_net *n)
+int cn_receive(cnc_net *n)
 {
+  if (n == NULL ||             // n is null
+      n->connected == false || // network is disconnected
+      n->ctx == NULL ||        // ctx is null
+      n->ssl == NULL ||        // ssl is null
+      n->sockfd == -1)         // socket fd is not set
+  {
+    return -1;
+  }
+
   char buffer[BUFSIZE];
 
   int bytes_received = SSL_read(n->ssl, buffer, sizeof(buffer));
 
   if (bytes_received <= 0)
   {
-    n->connected = false;
-    cnc_net_disconnect(n);
+    cn_disconnect(n);
 
     return -1;
   }
 
-  add_buffer_to_messages(buffer, bytes_received, n->message_buffer,
-                         n->username->contents, n->databuffer, n->terminal,
-                         n->infobar);
+  cm_add_buffer_to_messages(buffer, bytes_received, n->msg_buffer, n->username,
+                            n->app);
 
   return bytes_received;
 }
 
-int cnc_net_send(cnc_net *n, const char *data)
+int cn_send(cnc_net *n, const char *data)
 {
-  int bytes_sent = SSL_write(n->ssl, data, calen(data) + 1);
+  if (n == NULL ||             // n is null
+      data == NULL ||          // data pointer is null
+      n->connected == false || // network is disconnected
+      n->ctx == NULL ||        // ctx is null
+      n->ssl == NULL ||        // ssl is null
+      n->sockfd == -1)         // socket fd is not set
+  {
+    return -1;
+  }
+
+  int bytes_sent = SSL_write(n->ssl, data, strlen(data) + 1);
 
   if (bytes_sent <= 0)
   {
-    n->connected = false;
-    cnc_net_disconnect(n);
+    cn_disconnect(n);
 
     return -1;
   }
@@ -136,19 +200,21 @@ int cnc_net_send(cnc_net *n, const char *data)
   return bytes_sent;
 }
 
-void cnc_net_disconnect(cnc_net *n)
+void cn_disconnect(cnc_net *n)
 {
+  n->connected = false;
+
   if (n == NULL)
   {
     return;
   }
 
-  SSL_write(n->ssl, ".q", 3);
-  sleep(1);
-
   // Shutdown SSL connection
-  if (n->ssl != NULL)
+  if (n->ssl)
   {
+    SSL_write(n->ssl, ".q", 3);
+    sleep(1);
+
     SSL_shutdown(n->ssl);
     SSL_free(n->ssl);
     n->ssl = NULL;
@@ -167,19 +233,18 @@ void cnc_net_disconnect(cnc_net *n)
     SSL_CTX_free(n->ctx);
     n->ctx = NULL;
   }
-
-  // Update connection status
-  n->connected = false;
 }
 
-void cnc_net_destroy(cnc_net *n)
+void cn_destroy(cnc_net **n_ptr)
 {
-  while (n->connected)
+  if (n_ptr == NULL || *n_ptr == NULL)
   {
-    cnc_net_disconnect(n);
-    sleep(1);
+    return;
   }
 
-  free(n);
-  n = NULL;
+  // make sure network is disconnected
+  cn_disconnect(*n_ptr);
+
+  free(*n_ptr);
+  *n_ptr = NULL;
 }

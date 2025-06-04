@@ -1,315 +1,385 @@
 #include "cnc_message.h"
 
-void add_buffer_to_messages(const char *buffer, size_t bytes_received,
-                            cnc_buffer *message_buffer, const char *username,
-                            cnc_buffer *databuffer, cnc_terminal *term,
-                            cnc_widget *infobar)
+// private functions declarations
+static void _cm_append_basic_message(cnc_buffer *buffer, cnc_buffer *message);
+static void _cm_append_color_and_timestamp(cnc_buffer *buffer,
+                                           const char *timestamp,
+                                           uint32_t    color);
+static void _cm_append_user_info(cnc_buffer *buffer, uint32_t user_id,
+                                 cnc_buffer *from_to, const char *prefix);
+static uint32_t _cm_extract_num(cnc_buffer *input, size_t start);
+
+// private functions
+static void _cm_append_basic_message(cnc_buffer *buffer, cnc_buffer *message)
 {
+  cb_append_buf(buffer, message);
+}
+
+static void _cm_append_color_and_timestamp(cnc_buffer *buffer,
+                                           const char *timestamp,
+                                           uint32_t    color)
+{
+  cb_push(buffer, CTT_PV(C_COL));
+  cb_push(buffer, CTT_PV(color));
+  if (timestamp)
+  {
+    cb_append_txt(buffer, timestamp);
+    cb_push(buffer, CTT_PV(C_SPC));
+  }
+}
+
+static void _cm_append_user_info(cnc_buffer *buffer, uint32_t user_id,
+                                 cnc_buffer *from_to, const char *prefix)
+{
+  char buffer_id[11];
+  sprintf(buffer_id, "%u", user_id);
+
+  cb_append_txt(buffer, prefix);
+  cb_append_txt(buffer, buffer_id);
+  cb_append_txt(buffer, "]");
+  cb_append_buf(buffer, from_to);
+  cb_append_txt(buffer, ":");
+}
+
+static uint32_t _cm_extract_num(cnc_buffer *input, size_t start)
+{
+  if (input == NULL || input->data == NULL)
+  {
+    return 0;
+  }
+
+  uint32_t output = 0;
+  uint32_t value  = 0;
+  size_t   index  = start;
+
+  while (index < input->size)
+  {
+    value = input->data[index++].token.value;
+
+    if (value < '0' || value > '9')
+    {
+      return output;
+    }
+
+    output = 10 * output + value - '0';
+  }
+
+  return output;
+}
+
+// end of private functions
+
+void cm_add_buffer_to_messages(const char *buffer, size_t bytes_received,
+                               cnc_buffer *msg_buffer, cnc_buffer *username,
+                               cnc_app *app)
+{
+  if (buffer == NULL || app == NULL || msg_buffer == NULL ||
+      msg_buffer->data == NULL || username == NULL || username->data == NULL)
+  {
+    return;
+  }
+
   if (bytes_received <= 0)
   {
     return;
   }
 
-  for (int i = 0; i < bytes_received; i++)
+  cnc_term_token tkn   = {0};
+  size_t         index = 0;
+
+  while (index < bytes_received)
   {
-    if (buffer[i] == '\0' || buffer[i] == '\r')
+    if (buffer[index] == C_NUL || buffer[index] == C_RET)
     {
-      continue;
+      index++;
     }
 
-    if (buffer[i] == '\n')
+    else if (buffer[index] == C_ENT)
     {
-      cnc_buffer_insert_char(message_buffer, message_buffer->length, 1, '\0');
-      message_parse(message_buffer->contents, message_buffer->length, username,
-                    databuffer, term, infobar);
-      cnc_terminal_update(term);
-      cnc_buffer_clear(message_buffer);
+      // cb_push(message_buffer, CTT_PV(0));
+      cm_parse(msg_buffer, username, app);
+      ca_update(app);
+      cb_clear(msg_buffer);
+      index++;
     }
 
     else
     {
-      cnc_buffer_insert_char(message_buffer, message_buffer->length, 1,
-                             buffer[i]);
+      ctt_parse_bytes((uint8_t *)&buffer[index], &tkn);
+      cb_push(msg_buffer, tkn);
+      index += tkn.token.length;
     }
   }
 }
 
-void message_parse(const char *message_string, size_t length,
-                   const char *username, cnc_buffer *databuffer,
-                   cnc_terminal *term, cnc_widget *infobar)
+bool cm_init(cnc_message *cm)
 {
-  if (databuffer->length + MAX_MESSAGE_BODY > databuffer->size)
+  if (cm == NULL)
   {
-    // before parsing any message, we need to be sure that the databuffer
-    // can contain an additional message.
-    // if not, we need to empty old messages from it, so that at least
-    // 50% will be free for new messages.
-
-    size_t start_index = databuffer->length - databuffer->size / 2;
-
-    while (databuffer->contents[start_index] != '\n')
-    {
-      // loop till the first beginning of a line
-      start_index++;
-    }
-
-    start_index++;
-
-    for (size_t i = start_index; i < databuffer->length; i++)
-    {
-      databuffer->contents[i - start_index] = databuffer->contents[i];
-    }
-
-    for (size_t i = databuffer->length - start_index; i < databuffer->size; i++)
-    {
-      databuffer->contents[i] = '\0';
-    }
-
-    databuffer->length -= start_index;
-    cnc_buffer_append(databuffer, "\n");
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_MAGENTA_FG);
-    cnc_buffer_append(databuffer, "  ** cleared few old messages **\n");
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
-    cnc_buffer_append(databuffer, "\n");
+    return false;
   }
 
-  size_t tmp_index;
-  time_t t;
-  struct tm *tm_info;
-  char timestamp[9];
-  cnc_buffer *tmp_buf = cnc_buffer_init(MAX_MESSAGE_BODY);
-  cnc_buffer *msg_buf = cnc_buffer_init(MAX_MESSAGE_BODY);
+  if (cb_init(&(cm->from_to), MAX_NAME) == false)
+  {
+    return false;
+  }
 
-  cnc_buffer_set_text(msg_buf, message_string);
+  if (cb_init(&(cm->body), MAX_MESSAGE_BODY) == false)
+  {
+    cb_destroy(&(cm->from_to));
+
+    return false;
+  }
+
+  cm->type    = CM_NONE;
+  cm->user_id = 0;
+
+  return true;
+}
+
+void cm_destroy(cnc_message *cm)
+{
+  if (cm == NULL)
+  {
+    return;
+  }
+
+  cb_destroy(&cm->from_to);
+  cb_destroy(&cm->body);
+}
+
+void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
+{
+  if (app == NULL || msg_buffer == NULL || msg_buffer->data == NULL ||
+      username == NULL || username->data == NULL)
+  {
+    return;
+  }
+
+  size_t      start_index;
+  size_t      stop_index;
+  time_t      t;
+  struct tm  *tm_info;
+  char        timestamp[9];
+  cnc_message this_message;
+
+  if (cm_init(&this_message) == false)
+  {
+    return;
+  }
 
   time(&t);
   tm_info = localtime(&t);
 
-  strftime(timestamp, 9, "%H:%M:%S", tm_info);
-  timestamp[8] = '\0';
+  strftime(timestamp, sizeof(timestamp), "%H:%M:%S", tm_info);
+  timestamp[8] = C_NUL;
 
-  if (message_string[0] == '<')
+  // private message received
+  if (msg_buffer->data[0].token.value == '<')
   {
-    // private message received
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
-
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_YELLOW_FG);
-
-    // insert timestamp
-    cnc_buffer_append(databuffer, timestamp);
-    cnc_buffer_append(databuffer, " ");
-
-    if (cnc_buffer_locate_string(msg_buf, " (private):", &tmp_index))
+    if (cb_locate_c_str(msg_buffer, ">", &start_index) &&
+        cb_locate_c_str(msg_buffer, " (private):", &stop_index))
     {
-      // add received sign (<<: )
-      cnc_buffer_append(databuffer, "<< ");
+      this_message.type    = CM_PRIV_IN;
+      this_message.user_id = _cm_extract_num(msg_buffer, 1);
 
-      // message from -> tmp_buffer
-      cnc_buffer_replace_text(tmp_buf, 0, tmp_index, msg_buf->contents, 0);
-      cnc_buffer_append(databuffer, tmp_buf->contents);
-      cnc_buffer_append(databuffer, ": ");
-      cnc_buffer_clear(tmp_buf);
-
-      // message body -> tmp_buffer
-      cnc_buffer_replace_text(tmp_buf, 0, msg_buf->length - tmp_index - 12,
-                              msg_buf->contents, tmp_index + 12);
-      cnc_buffer_append(databuffer, tmp_buf->contents);
-      cnc_buffer_clear(tmp_buf);
-    }
-
-    else
-    {
-      cnc_buffer_append(databuffer, "[ ... ]");
-    }
-
-    cnc_buffer_append(databuffer, "\n");
-  }
-
-  else if (cnc_buffer_locate_string(msg_buf, ">> Message sent to", &tmp_index))
-  {
-    // private message sent
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
-
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_MAGENTA_FG);
-
-    // insert timestamp
-    cnc_buffer_append(databuffer, timestamp);
-    cnc_buffer_append(databuffer, " ");
-
-    size_t start, end;
-
-    if (cnc_buffer_locate_string(msg_buf, "[", &start))
-    {
-      if (cnc_buffer_locate_string(msg_buf, ":", &end))
+      for (size_t i = start_index + 1; i < stop_index; i++)
       {
-        // add sent sign (>>: )
-        cnc_buffer_append(databuffer, ">> ");
+        if (this_message.from_to.size < MAX_NAME)
+        {
+          cb_push(&this_message.from_to, msg_buffer->data[i]);
+        }
+      }
 
-        // user to -> tmp_buffer
-        cnc_buffer_replace_text(tmp_buf, 0, end - start, msg_buf->contents,
-                                start);
-        cnc_buffer_append(databuffer, tmp_buf->contents);
-        cnc_buffer_append(databuffer, ": ");
-        cnc_buffer_clear(tmp_buf);
+      for (size_t i = stop_index + 12; i < msg_buffer->size; i++)
+      {
+        if (this_message.body.size < MAX_MESSAGE_BODY)
+        {
+          cb_push(&this_message.body, msg_buffer->data[i]);
+        }
       }
     }
 
     else
     {
-      cnc_buffer_append(databuffer, "[ ... ]");
+      // badly constructed message. send it as is
+      // cb_set_txt(&this_message.body, "[ ... ]");
+      cb_set_buf(&this_message.body, msg_buffer);
     }
+  } // end private message received
 
-    if (cnc_buffer_locate_string(msg_buf, " (private):", &tmp_index))
-    {
-      // message body -> tmp_buffer
-      cnc_buffer_replace_text(tmp_buf, 0, msg_buf->length - tmp_index - 12,
-                              msg_buf->contents, tmp_index + 12);
-      cnc_buffer_append(databuffer, tmp_buf->contents);
-      cnc_buffer_clear(tmp_buf);
-    }
-
-    else
-    {
-      cnc_buffer_append(databuffer, "[ ... ]");
-    }
-
-    cnc_buffer_append(databuffer, "\n");
-  }
-
-  else if (message_string[0] == '(')
+  // private message sent
+  else if (cb_locate_c_str(msg_buffer, ">> Message sent to [", &start_index))
   {
-    // message emote
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
+    this_message.user_id = _cm_extract_num(msg_buffer, start_index + 1);
 
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_GREEN_FG);
-
-    // insert timestamp
-    cnc_buffer_append(databuffer, timestamp);
-    cnc_buffer_append(databuffer, " ");
-
-    cnc_buffer_append(databuffer, msg_buf->contents);
-    cnc_buffer_append(databuffer, "\n");
-  }
-
-  else if (message_string[0] == '[')
-  {
-    // message can be either sent, or received.
-    // we need to compare the username...
-
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
-
-    if (cnc_buffer_locate_string(msg_buf, "]", &tmp_index))
+    if (cb_locate_c_str(msg_buffer, "]", &start_index) &&
+        cb_locate_c_str(msg_buffer, ":", &stop_index))
     {
-      cnc_buffer *uname = cnc_buffer_init(MAX_NAME);
-      size_t end;
-
-      if (cnc_buffer_locate_string(msg_buf, ":", &end))
+      for (size_t i = start_index + 1; i < stop_index; i++)
       {
-        // message from -> tmp_buffer
-        cnc_buffer_replace_text(tmp_buf, 0, end, msg_buf->contents, 0);
-
-        // stripped message from -> uname
-        cnc_buffer_replace_text(uname, 0, end - tmp_index - 1,
-                                msg_buf->contents, tmp_index + 1);
-
-        if (cnc_buffer_equal_string(uname, username))
+        if (this_message.from_to.size < MAX_NAME)
         {
-          // message is sent: set the sent color indicator
-          cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                                 COLOR_INFO_BYTE);
-          cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                                 COLOR_CODE_CYAN_FG);
+          cb_push(&this_message.from_to, msg_buffer->data[i]);
         }
+      }
 
-        // insert timestamp
-        cnc_buffer_append(databuffer, timestamp);
-        cnc_buffer_append(databuffer, " ");
+      // now get the actual message after "(private):"
+      if (cb_locate_c_str(msg_buffer, "(private):", &start_index))
+      {
+        this_message.type = CM_PRIV_OUT;
 
-        cnc_buffer_append(databuffer, tmp_buf->contents);
-        cnc_buffer_append(databuffer, ": ");
-
-        cnc_buffer_clear(tmp_buf);
-
-        // message body -> tmp_buffer
-        cnc_buffer_replace_text(tmp_buf, 0, msg_buf->length - end - 2,
-                                msg_buf->contents, end + 2);
-        cnc_buffer_append(databuffer, tmp_buf->contents);
-        cnc_buffer_clear(tmp_buf);
+        for (size_t i = start_index + 10; i < msg_buffer->size; i++)
+        {
+          if (this_message.body.size < MAX_MESSAGE_BODY)
+          {
+            cb_push(&this_message.body, msg_buffer->data[i]);
+          }
+        }
       }
 
       else
       {
-        // message is neither sent nor received... print it as is...
-
-        cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                               COLOR_INFO_BYTE);
-        cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                               COLOR_CODE_DEFAULT);
-
-        cnc_buffer_append(databuffer, msg_buf->contents);
+        // badly constructed message. send it as is
+        // cb_set_txt(&this_message.body, "[ ... ]");
+        cb_set_buf(&this_message.body, msg_buffer);
       }
-
-      // destroy uname
-      cnc_buffer_destroy(uname);
     }
 
     else
     {
-      cnc_buffer_append(databuffer, "[ ... ]");
+      // badly constructed message. send it as is
+      // cb_set_txt(&this_message.body, "[ ... ]");
+      cb_set_buf(&this_message.body, msg_buffer);
+    }
+  } // end private message sent
+
+  // message emote
+  else if (msg_buffer->data[0].token.value == '(')
+  {
+    this_message.type = CM_EMOTE;
+    cb_append_buf(&this_message.body, msg_buffer);
+  } // end message emote
+
+  // message sent or received
+  else if (msg_buffer->data[0].token.value == '[')
+  {
+    this_message.user_id = _cm_extract_num(msg_buffer, 1);
+
+    if (cb_locate_c_str(msg_buffer, "]", &start_index) &&
+        cb_locate_c_str(msg_buffer, ":", &stop_index))
+    {
+      for (size_t i = start_index + 1; i < stop_index; i++)
+      {
+        if (this_message.from_to.size < MAX_NAME)
+        {
+          cb_push(&this_message.from_to, msg_buffer->data[i]);
+        }
+      }
+
+      if (cb_equal(&this_message.from_to, username))
+      {
+        this_message.type = CM_SENT;
+      }
+
+      else
+      {
+        this_message.type = CM_RECEIVED;
+      }
+
+      for (size_t i = stop_index + 1; i < msg_buffer->size; i++)
+      {
+        if (this_message.body.size < MAX_MESSAGE_BODY)
+        {
+          cb_push(&this_message.body, msg_buffer->data[i]);
+        }
+      }
     }
 
-    cnc_buffer_append(databuffer, "\n");
-  }
+    else
+    {
+      // badly constructed message. send it as is
+      // cb_set_txt(&this_message.body, "[ ... ]");
+      cb_set_buf(&this_message.body, msg_buffer);
+    }
+  } // end message sent or received
 
-  else if (message_string[0] == '>' && message_string[1] == '>')
+  // system message
+  else if (msg_buffer->data[0].token.value == '>' &&
+           msg_buffer->data[1].token.value == '>')
   {
-    // system message
+    this_message.type = CM_SYSTEM;
+    cb_append_buf(&this_message.body, msg_buffer);
+  } // end system message
 
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
-
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_RED_FG);
-
-    cnc_buffer_append(databuffer, msg_buf->contents);
-    cnc_buffer_append(databuffer, "\n");
-  }
-
+  // something else
   else
   {
-    // message none
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1, COLOR_INFO_BYTE);
-    cnc_buffer_insert_char(databuffer, databuffer->length, 1,
-                           COLOR_CODE_DEFAULT);
-
-    cnc_buffer_append(databuffer, msg_buf->contents);
-    cnc_buffer_append(databuffer, "\n");
+    cb_append_buf(&this_message.body, msg_buffer);
   }
 
-  char buf[14];
-  sprintf(buf, "[%5zu/%5zu]", databuffer->length, databuffer->size);
-  cnc_buffer_replace_text(infobar->data, 0, 14, buf, 0);
+  switch (this_message.type)
+  {
+    case CM_SYSTEM:
+      _cm_append_color_and_timestamp(&app->cw_display->buffer, NULL, KS_RED_FG);
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
 
-  cnc_buffer_destroy(msg_buf);
-  cnc_buffer_destroy(tmp_buf);
+    case CM_EMOTE:
+      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
+                                     KS_GRE_FG);
+      cb_append_txt(&app->cw_display->buffer, "~~ ");
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
+
+    case CM_SENT:
+      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
+                                     KS_CYA_FG);
+      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+                           &this_message.from_to, ">> [");
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
+
+    case CM_PRIV_OUT:
+      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
+                                     KS_MAG_FG);
+      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+                           &this_message.from_to, ">> [");
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
+
+    case CM_PRIV_IN:
+      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
+                                     KS_YEL_FG);
+      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+                           &this_message.from_to, "<< [");
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
+
+    case CM_RECEIVED:
+      cb_append_txt(&app->cw_display->buffer, timestamp);
+      cb_push(&app->cw_display->buffer, CTT_PV(C_SPC));
+      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+                           &this_message.from_to, "<< [");
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
+
+    case CM_NONE:
+    default:
+      cb_append_txt(&app->cw_display->buffer, "| ");
+      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      break;
+  }
+
+  // Finally, end the message
+  cb_push(&app->cw_display->buffer, CTT_PV(C_ENT));
+  cm_destroy(&this_message);
+
+  // set the index of first message to be displayed
+  if (app->cw_display->data_index - app->cw_display->index + 1 >
+      app->cw_display->frame.height)
+  {
+    app->cw_display->index =
+      app->cw_display->data_index + 1 - app->cw_display->frame.height;
+  }
 }

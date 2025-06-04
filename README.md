@@ -80,17 +80,8 @@ $ ./cnctty --version
 | Mode       | Command        | Action                |
 | ---------- | -------------- | --------------------- |
 | **INSERT** | `:q `          | quit                  |
-| **INSERT** | `:Q `          | quit                  |
 | **INSERT** | `:c `          | connect to server     |
-| **INSERT** | `:C `          | connect to server     |
 | **INSERT** | `:d `          | disconnect            |
-| **INSERT** | `:D `          | disconnect            |
-| **CMD**    | <kbd>q</kbd>   | quit                  |
-| **CMD**    | <kbd>Q</kbd>   | quit                  |
-| **CMD**    | <kbd>c</kbd>   | connect to server     |
-| **CMD**    | <kbd>C</kbd>   | connect to server     |
-| **CMD**    | <kbd>d</kbd>   | disconnect            |
-| **CMD**    | <kbd>D</kbd>   | disconnect            |
 
 ## License
 

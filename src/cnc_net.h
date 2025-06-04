@@ -7,7 +7,10 @@
 #include <stdbool.h>
 #include <sys/socket.h>
 
+#include "cnc_library/src/lib/cnc_library.h"
 #include "cnc_message.h"
+
+// we will use cn as prefix for cnc_net
 
 // uncomment below if run in development mode
 // #define DEVEL_MODE 1
@@ -23,27 +26,23 @@
 
 typedef struct
 {
-  bool connected;
-  int sockfd;
+  bool               connected;
+  int                sockfd;
   struct sockaddr_in serv_addr;
-  SSL_CTX *ctx;
-  SSL *ssl;
+  SSL_CTX           *ctx;
+  SSL               *ssl;
 
-  cnc_buffer *databuffer;
-
-  // pointers to variables in other modules
   cnc_buffer *username;
-  cnc_buffer *message_buffer;
-  cnc_terminal *terminal;
-  cnc_widget *infobar;
+  cnc_buffer *msg_buffer;
+  cnc_app    *app;
 
 } cnc_net;
 
-cnc_net *cnc_net_init();
-int cnc_net_connect(cnc_net *n);
-int cnc_net_receive(cnc_net *n);
-int cnc_net_send(cnc_net *n, const char *data);
-void cnc_net_disconnect(cnc_net *n);
-void cnc_net_destroy(cnc_net *n);
+cnc_net *cn_init();
+bool     cn_connect(cnc_net *n);
+int      cn_receive(cnc_net *n);
+int      cn_send(cnc_net *n, const char *data);
+void     cn_disconnect(cnc_net *n);
+void     cn_destroy(cnc_net **n_ptr);
 
 #endif

@@ -2,6 +2,6 @@ default:
 	@+make -C build
 
 clean:
-	@rm -f build/*.o
+	@rm -rf build/objects/*
 	@rm -f cnctty
 	@echo "Clean!"
