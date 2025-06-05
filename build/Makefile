@@ -10,20 +10,27 @@ SRC_DIR := ../src
 OBJ_DIR := ./objects
 BIN := ../cnctty
 
+VERSION_HEADER := $(SRC_DIR)/version.h
+GIT_HEAD := ../.git/HEAD
+GEN_VERSION := ./version.sh
+
 # Source and object files
 SRC_FILES := $(shell find -L $(SRC_DIR) -name '*.c')
 SRC_FILES := $(filter-out ../src/cnc_library/src/sample.c, $(SRC_FILES))
 OBJ_FILES := $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRC_FILES))
 
-# Default target
 all: $(BIN)
 
-# Link final binary
-$(BIN): $(OBJ_FILES)
+prebuild:
+	@rm -f $(VERSION_HEADER)
+
+$(VERSION_HEADER): prebuild
+	$(GEN_VERSION) $(VERSION_HEADER)
+
+$(BIN): $(VERSION_HEADER) $(OBJ_FILES)
 	@mkdir -p $(dir $@)
 	$(CC) $(OBJ_FILES) -o $@ $(LDFLAGS)
 
-# Compile source files
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(VERSION_HEADER)
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@

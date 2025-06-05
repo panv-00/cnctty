@@ -2,8 +2,7 @@
 #define CNCTTY_H
 
 #include "cnc_net.h"
-
-#define APP_VERSION "1.0.0"
+#include "version.h"
 
 #define MIN_TERM_HEIGHT 10
 #define MIN_TERM_WIDTH  45
