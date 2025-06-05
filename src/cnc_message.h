@@ -1,7 +1,7 @@
 #ifndef CNC_MESSAGE_H
 #define CNC_MESSAGE_H
 
-#define MAX_MESSAGE_BODY 542
+#define MAX_MESSAGE_BODY 600
 #define MAX_NAME         17
 
 #include <stddef.h>

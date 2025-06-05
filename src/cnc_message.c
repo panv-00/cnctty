@@ -1,4 +1,5 @@
 #include "cnc_message.h"
+#include "cnc_library/src/lib/cnc_buffer.h"
 
 // private functions declarations
 static void _cm_append_basic_message(cnc_buffer *buffer, cnc_buffer *message);
@@ -318,68 +319,117 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
     cb_append_buf(&this_message.body, msg_buffer);
   }
 
+  cnc_buffer formatted_message;
+  cb_init(&formatted_message, MAX_MESSAGE_BODY);
+
   switch (this_message.type)
   {
     case CM_SYSTEM:
-      _cm_append_color_and_timestamp(&app->cw_display->buffer, NULL, KS_RED_FG);
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      _cm_append_color_and_timestamp(&formatted_message, NULL, KS_RED_FG);
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_EMOTE:
-      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
-                                     KS_GRE_FG);
-      cb_append_txt(&app->cw_display->buffer, "~~ ");
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      _cm_append_color_and_timestamp(&formatted_message, timestamp, KS_GRE_FG);
+      cb_append_txt(&formatted_message, "~~ ");
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_SENT:
-      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
-                                     KS_CYA_FG);
-      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+      _cm_append_color_and_timestamp(&formatted_message, timestamp, KS_CYA_FG);
+      _cm_append_user_info(&formatted_message, this_message.user_id,
                            &this_message.from_to, ">> [");
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_PRIV_OUT:
-      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
-                                     KS_MAG_FG);
-      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+      _cm_append_color_and_timestamp(&formatted_message, timestamp, KS_MAG_FG);
+      _cm_append_user_info(&formatted_message, this_message.user_id,
                            &this_message.from_to, ">> [");
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_PRIV_IN:
-      _cm_append_color_and_timestamp(&app->cw_display->buffer, timestamp,
-                                     KS_YEL_FG);
-      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+      _cm_append_color_and_timestamp(&formatted_message, timestamp, KS_YEL_FG);
+      _cm_append_user_info(&formatted_message, this_message.user_id,
                            &this_message.from_to, "<< [");
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_RECEIVED:
-      cb_append_txt(&app->cw_display->buffer, timestamp);
-      cb_push(&app->cw_display->buffer, CTT_PV(C_SPC));
-      _cm_append_user_info(&app->cw_display->buffer, this_message.user_id,
+      cb_append_txt(&formatted_message, timestamp);
+      cb_push(&formatted_message, CTT_PV(C_SPC));
+      _cm_append_user_info(&formatted_message, this_message.user_id,
                            &this_message.from_to, "<< [");
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_NONE:
     default:
-      cb_append_txt(&app->cw_display->buffer, "| ");
-      _cm_append_basic_message(&app->cw_display->buffer, &this_message.body);
+      cb_append_txt(&formatted_message, "| ");
+      _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
   }
 
-  // Finally, end the message
-  cb_push(&app->cw_display->buffer, CTT_PV(C_ENT));
-  cm_destroy(&this_message);
-
   // set the index of first message to be displayed
-  if (app->cw_display->data_index - app->cw_display->index + 1 >
-      app->cw_display->frame.height)
+  // calculate this message number of rows to add to previous data_index
+  size_t rows             = 0;
+  size_t counter          = 0;
+  size_t last_space_index = 0;
+  size_t first_index      = 0;
+  size_t row_width        = 0;
+
+  // calculation phase
+  while (counter < formatted_message.size)
+  {
+    row_width =
+      cb_data_width(&formatted_message, first_index, counter - first_index + 1);
+
+    if (row_width > app->cterm->scr_cols)
+    {
+      rows++;
+
+      if (last_space_index > first_index)
+      {
+        counter = last_space_index + 1;
+
+        // Skip any additional whitespace after wrap
+        while (counter < formatted_message.size &&
+               ctt_is_whitespace(formatted_message.data[counter]))
+        {
+          counter++;
+        }
+      }
+
+      first_index = counter;
+      continue;
+    }
+
+    if (ctt_is_whitespace(formatted_message.data[counter]))
+    {
+      last_space_index = counter++;
+      continue;
+    }
+
+    // Colors decryption
+    if (formatted_message.data[counter].token.value == C_COL)
+    {
+      counter += 2;
+      continue;
+    }
+
+    counter++;
+  }
+
+  // Finally, end the message
+  cb_push(&formatted_message, CTT_PV(C_ENT));
+  cb_append_buf(&app->cw_display->buffer, &formatted_message);
+  cm_destroy(&this_message);
+  cb_destroy(&formatted_message);
+
+  if (app->cw_display->data_index + rows > app->cw_display->frame.height)
   {
     app->cw_display->index =
-      app->cw_display->data_index + 1 - app->cw_display->frame.height;
+      app->cw_display->data_index - app->cw_display->frame.height + rows + 1;
   }
 }
