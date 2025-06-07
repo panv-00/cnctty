@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
 
       // App is just starting? user has to pick the username
       // then the password
-      if (getting_username)
+      if (getting_username && prompt->buffer.size > 0)
       {
         cb_set_buf(&username, &prompt->buffer);
 
