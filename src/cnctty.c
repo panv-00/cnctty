@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
   {
     redraw_terminal = true;
 
-    net_fd   = SSL_get_rfd(net->ssl);
+    net_fd   = net->connected ? SSL_get_rfd(net->ssl) : -1;
     input_fd = fileno(stdin);
     nfds     = (net_fd > input_fd ? net_fd : input_fd) + 1;
 
