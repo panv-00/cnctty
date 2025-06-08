@@ -161,7 +161,7 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
   size_t      stop_index;
   time_t      t;
   struct tm  *tm_info;
-  char        timestamp[9];
+  char        timestamp[6];
   cnc_message this_message;
 
   if (cm_init(&this_message) == false)
@@ -172,8 +172,8 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
   time(&t);
   tm_info = localtime(&t);
 
-  strftime(timestamp, sizeof(timestamp), "%H:%M:%S", tm_info);
-  timestamp[8] = C_NUL;
+  strftime(timestamp, sizeof(timestamp), "%H:%M", tm_info);
+  timestamp[5] = C_NUL;
 
   // private message received
   if (msg_buffer->data[0].token.value == '<')
@@ -212,7 +212,7 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
   // private message sent
   else if (cb_locate_c_str(msg_buffer, ">> Message sent to [", &start_index))
   {
-    this_message.user_id = _cm_extract_num(msg_buffer, start_index + 1);
+    this_message.user_id = _cm_extract_num(msg_buffer, start_index + 20);
 
     if (cb_locate_c_str(msg_buffer, "]", &start_index) &&
         cb_locate_c_str(msg_buffer, ":", &stop_index))
