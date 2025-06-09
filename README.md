@@ -2,6 +2,8 @@
 
 A simple nakenchat client built in C.
 
+** Checkout my android client [cnctty](https://github.com/panv-00/nakenChat.git)
+
 ## About
 
 I tried to separate the user interface from the main routines logic in my previous client, and got to `cnctty`.
