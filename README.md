@@ -2,7 +2,7 @@
 
 A simple nakenchat client built in C.
 
-** Checkout my android client [cnctty](https://github.com/panv-00/nakenChat.git)
+** Checkout my android client [nakenChat](https://github.com/panv-00/nakenChat.git)
 
 ## About
 
