@@ -345,14 +345,14 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
     case CM_PRIV_OUT:
       _cm_append_color_and_timestamp(&formatted_message, timestamp, KS_MAG_FG);
       _cm_append_user_info(&formatted_message, this_message.user_id,
-                           &this_message.from_to, ">> [");
+                           &this_message.from_to, "P> [");
       _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
     case CM_PRIV_IN:
       _cm_append_color_and_timestamp(&formatted_message, timestamp, KS_YEL_FG);
       _cm_append_user_info(&formatted_message, this_message.user_id,
-                           &this_message.from_to, "<< [");
+                           &this_message.from_to, "P< [");
       _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
 
@@ -366,7 +366,7 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
 
     case CM_NONE:
     default:
-      cb_append_txt(&formatted_message, "| ");
+      cb_append_txt(&formatted_message, ". ");
       _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
   }
