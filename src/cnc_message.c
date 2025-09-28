@@ -68,7 +68,7 @@ static uint32_t _cm_extract_num(cnc_buffer *input, size_t start)
   return output;
 }
 
-// end of private functions
+// global functions
 
 void cm_add_buffer_to_messages(const char *buffer, size_t bytes_received,
                                cnc_buffer *msg_buffer, cnc_buffer *username,
@@ -203,11 +203,10 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
 
     else
     {
-      // badly constructed message. send it as is
-      // cb_set_txt(&this_message.body, "[ ... ]");
+      // not a private message? push it as is
       cb_set_buf(&this_message.body, msg_buffer);
     }
-  } // end private message received
+  }
 
   // private message sent
   else if (cb_locate_c_str(msg_buffer, ">> Message sent to [", &start_index))
@@ -225,7 +224,7 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
         }
       }
 
-      // now get the actual message after "(private):"
+      // actual message after "(private):"
       if (cb_locate_c_str(msg_buffer, "(private):", &start_index))
       {
         this_message.type = CM_PRIV_OUT;
@@ -241,26 +240,24 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
 
       else
       {
-        // badly constructed message. send it as is
-        // cb_set_txt(&this_message.body, "[ ... ]");
+        // not private message sent? push it as is
         cb_set_buf(&this_message.body, msg_buffer);
       }
     }
 
     else
     {
-      // badly constructed message. send it as is
-      // cb_set_txt(&this_message.body, "[ ... ]");
+      // not private message sent? push it as is
       cb_set_buf(&this_message.body, msg_buffer);
     }
-  } // end private message sent
+  }
 
-  // message emote
+  // emote message
   else if (msg_buffer->data[0].token.value == '(')
   {
     this_message.type = CM_EMOTE;
     cb_append_buf(&this_message.body, msg_buffer);
-  } // end message emote
+  }
 
   // message sent or received
   else if (msg_buffer->data[0].token.value == '[')
@@ -299,11 +296,10 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
 
     else
     {
-      // badly constructed message. send it as is
-      // cb_set_txt(&this_message.body, "[ ... ]");
+      // unexpected message. push it as is
       cb_set_buf(&this_message.body, msg_buffer);
     }
-  } // end message sent or received
+  }
 
   // system message
   else if (msg_buffer->data[0].token.value == '>' &&
@@ -311,7 +307,7 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
   {
     this_message.type = CM_SYSTEM;
     cb_append_buf(&this_message.body, msg_buffer);
-  } // end system message
+  }
 
   // something else
   else
@@ -366,7 +362,7 @@ void cm_parse(cnc_buffer *msg_buffer, cnc_buffer *username, cnc_app *app)
 
     case CM_NONE:
     default:
-      cb_append_txt(&formatted_message, ". ");
+      // cb_append_txt(&formatted_message, ". ");
       _cm_append_basic_message(&formatted_message, &this_message.body);
       break;
   }
